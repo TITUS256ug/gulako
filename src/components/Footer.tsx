@@ -3,12 +3,10 @@ import { Logo } from './Logo'
 export function Footer() {
   return (
     <footer className="main-footer page-container">
-      <div><Logo /><p>Uganda's modern storefront for local commerce.</p></div>
+      <div><Logo /><p>Your online storefront for selling directly to your customers.</p></div>
       <div className="footer-links">
-        <a href="/explore">Explore</a>
-        <a href="/#pricing">Pricing</a>
         <a href="/signin">Sign in</a>
-        <a href="/signup">Sell on Gulako</a>
+        <a href="/signup">Start selling</a>
       </div>
       <small>© 2026 Gulako</small>
     </footer>
