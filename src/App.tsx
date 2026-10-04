@@ -20,7 +20,6 @@ export default function App() {
   if (path === '/cart') return <CartPage />
   if (path === '/checkout') return <CheckoutPage />
   if (parts[0] === 'order') return <OrderTrackPage id={parts[1] ?? 'GLK-2420'} />
-  if (parts[0] === 'shop') return <ShopPage slug={parts[1]} />
   if (parts[0] === 'product') return <ProductPage id={parts[1] ?? ''} />
   if (path === '/dashboard') return <DashboardHomePage />
   if (path === '/dashboard/products') return <DashboardProductsPage />
@@ -29,5 +28,6 @@ export default function App() {
   if (path === '/dashboard/analytics') return <DashboardAnalyticsPage />
   if (path === '/dashboard/store') return <DashboardStorePage />
   if (path === '/dashboard/settings') return <DashboardSettingsPage />
+  if (parts.length === 1) return <ShopPage slug={parts[0]} />
   return <HomePage />
 }
