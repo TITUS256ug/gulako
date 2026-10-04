@@ -10,6 +10,7 @@ export type Product = {
   description: string
   badge?: string
   stock: number
+  negotiable?: boolean
 }
 
 export type Shop = {
