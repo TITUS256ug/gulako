@@ -14,6 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
         {product.image ? <img src={product.image} alt={product.name} className="product-image" /> : <span className="product-card-placeholder"><Image size={30}/></span>}
         <span className="category-chip">{product.category}</span>
         {product.badge && <span className="product-badge">{product.badge}</span>}
+        {product.negotiable && <span className="negotiable-badge">Slightly negotiable</span>}
       </a>
       <div className="product-info">
         <p className="product-shop">{product.shopName}</p>
