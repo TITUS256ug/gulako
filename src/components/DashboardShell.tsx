@@ -2,6 +2,7 @@ import { BarChart3, Bell, Boxes, LayoutDashboard, LogOut, Package, Palette, Sett
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
+import { getStoreProfile } from '../lib/storeData'
 import { Logo } from './Logo'
 
 const links = [
@@ -17,12 +18,23 @@ const links = [
 export function DashboardShell({ children, title, subtitle, action }: { children: ReactNode; title: string; subtitle?: string; action?: ReactNode }) {
   const path = window.location.pathname
   const [logo,setLogo]=useState(()=>getShopLogo())
+  const [profile,setProfile]=useState(()=>getStoreProfile())
 
   useEffect(()=>{
-    const refresh=()=>setLogo(getShopLogo())
+    const refresh=()=>{
+      setLogo(getShopLogo())
+      setProfile(getStoreProfile())
+    }
     window.addEventListener('gulako-brand',refresh)
-    return()=>window.removeEventListener('gulako-brand',refresh)
+    window.addEventListener('gulako-store',refresh)
+    return()=>{
+      window.removeEventListener('gulako-brand',refresh)
+      window.removeEventListener('gulako-store',refresh)
+    }
   },[])
+
+  const shopName = profile.businessName || 'Your shop'
+  const previewHref = profile.businessName ? `/shop/${profile.slug}` : '/dashboard/store'
 
   return (
     <div className="dashboard-shell">
@@ -30,7 +42,7 @@ export function DashboardShell({ children, title, subtitle, action }: { children
         <Logo />
         <div className="shop-switcher">
           {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">G</span>}
-          <div><strong>Your shop</strong><small>Free plan · 30 products</small></div>
+          <div><strong>{shopName}</strong><small>Free plan · 30 products</small></div>
         </div>
         <nav>
           {links.map(({ href, label, icon: Icon }) => (
@@ -38,14 +50,14 @@ export function DashboardShell({ children, title, subtitle, action }: { children
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <a href="/dashboard/store"><Package size={18} /> <span>View shop</span></a>
+          <a href={previewHref}><Package size={18} /> <span>View shop</span></a>
           <a href="/signin"><LogOut size={18} /> <span>Sign out</span></a>
         </div>
       </aside>
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           <div><p className="eyebrow">Seller workspace</p><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
-          <div className="dashboard-top-actions"><button className="icon-button"><Bell size={18} /></button>{action}</div>
+          <div className="dashboard-top-actions"><button className="icon-button" aria-label="Notifications"><Bell size={18} /></button>{action}</div>
         </header>
         {children}
       </main>
