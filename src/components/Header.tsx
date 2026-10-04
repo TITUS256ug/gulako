@@ -33,7 +33,6 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
         {!compact && (
           <nav className="desktop-nav" aria-label="Main navigation">
             <a href="/explore">Explore</a>
-            <a href="/#pricing">Pricing</a>
             <a href="/shop/nile-ai-solutions">Demo shop</a>
           </nav>
         )}
@@ -53,8 +52,8 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
             <ShoppingBag size={18} />
             {count > 0 && <span>{count}</span>}
           </a>
-          <a className="text-button hide-small" href="/signin">Sign in</a>
-          <a className="primary-button header-cta" href="/signup"><Store size={17} /> Start selling</a>
+          <a className="primary-button header-login" href="/signin">Login</a>
+          <a className="soft-button header-cta" href="/signup"><Store size={17} /> Start selling</a>
           <button className="mobile-menu-button" onClick={() => setOpen(v => !v)} aria-label="Open menu">
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -64,7 +63,6 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
       {open && (
         <div className="mobile-menu">
           <a href="/explore">Explore</a>
-          <a href="/#pricing">Pricing</a>
           <a href="/shop/nile-ai-solutions">Demo shop</a>
           <a href="/signin">Sign in</a>
           <a href="/signup">Start selling</a>
