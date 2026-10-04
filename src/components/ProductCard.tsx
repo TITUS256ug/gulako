@@ -1,4 +1,4 @@
-import { ArrowUpRight, ShoppingBag } from 'lucide-react'
+import { ArrowUpRight, Image, ShoppingBag } from 'lucide-react'
 import type { Product } from '../data/mock'
 import { addToCart } from '../lib/cart'
 
@@ -11,7 +11,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="product-card">
       <a className="product-image-wrap" href={`/product/${product.id}`}>
-        <img src={product.image} alt={product.name} className="product-image" />
+        {product.image ? <img src={product.image} alt={product.name} className="product-image" /> : <span className="product-card-placeholder"><Image size={30}/></span>}
         <span className="category-chip">{product.category}</span>
         {product.badge && <span className="product-badge">{product.badge}</span>}
       </a>
