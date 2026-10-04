@@ -6,7 +6,6 @@ import { ExplorePage } from './pages/ExplorePage'
 import { HomePage } from './pages/HomePage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { OrderTrackPage } from './pages/OrderTrackPage'
-import { PricingPage } from './pages/PricingPage'
 import { ProductPage } from './pages/ProductPage'
 import { ShopPage } from './pages/ShopPage'
 
@@ -15,7 +14,7 @@ export default function App() {
   const parts = path.split('/').filter(Boolean)
   if (path === '/') return <HomePage />
   if (path === '/explore') return <ExplorePage />
-  if (path === '/pricing') return <PricingPage />
+  if (path === '/pricing') { window.location.replace('/signin'); return null }
   if (path === '/signin' || path === '/login') return <AuthPage mode="signin" />
   if (path === '/signup' || path === '/register') return <AuthPage mode="signup" />
   if (path === '/onboarding') return <OnboardingPage />
