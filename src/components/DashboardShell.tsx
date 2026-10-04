@@ -2,7 +2,7 @@ import { BarChart3, Bell, Boxes, Eye, LayoutDashboard, LogOut, Palette, Settings
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
-import { getStoreProfile } from '../lib/storeData'
+import { getStoreProfile, hydrateSellerData } from '../lib/storeData'
 import { backend } from '../lib/backend'
 import { Logo } from './Logo'
 
@@ -24,6 +24,7 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   const [plan,setPlan]=useState('free')
 
   useEffect(()=>{
+    void hydrateSellerData()
     void (async()=>{
       const {data:{user}}=await backend.auth.getUser()
       if(!user)return
