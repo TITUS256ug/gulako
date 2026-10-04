@@ -203,7 +203,7 @@ export function DashboardProductsPage(){
           <div className="inventory-card-actions"><div className="inventory-primary-actions"><button className="inventory-edit" onClick={()=>openForm(p.id)}><Pencil size={14}/> Edit</button><button className="inventory-duplicate" onClick={()=>duplicateSellerProduct(p.id)}><Copy size={14}/> Duplicate</button></div><button className="inventory-delete" onClick={()=>deleteSellerProduct(p.id)}><Trash2 size={14}/> Remove</button></div>
         </article>)}
         {products.length<30&&<button className="add-product-card" onClick={()=>openForm()}><PackagePlus size={26}/><strong>Add product</strong><span>{30-products.length} slots left on Free</span></button>}
-      </div> : <button className="add-product-card empty-add-product" onClick={openForm}><PackagePlus size={30}/><strong>Add your first product</strong><span>30 product slots available on Free</span></button>}
+      </div> : <button className="add-product-card empty-add-product" onClick={()=>openForm()}><PackagePlus size={30}/><strong>Add your first product</strong><span>30 product slots available on Free</span></button>}
     </section>
   </DashboardShell>
 }
