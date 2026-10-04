@@ -37,7 +37,7 @@ export function ProductPage({ id }: { id: string }) {
   const style={ '--shop-accent': accentColors[profile.accent] } as CSSProperties
   const whatsapp=profile.whatsapp.replace(/\D/g,'')
   const message=encodeURIComponent('Hello '+(profile.businessName||'seller')+', I am interested in '+product.name+'.')
-  const add=()=>{addToCart(product.id);window.dispatchEvent(new Event('gulako-cart'))}
+  const add=()=>{addToCart(product);window.dispatchEvent(new Event('gulako-cart'))}
   const buy=()=>{addToCart(product.id);window.location.href='/cart'}
 
   return <div className="app-shell customer-storefront" style={style}><Header/><main className="page-container product-page">
