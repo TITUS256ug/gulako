@@ -1,5 +1,5 @@
 import { Camera, Upload } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getShopLogo, saveShopLogo } from '../lib/shopBrand'
 import { getStoreProfile, saveStoreProfile, uploadSellerAsset } from '../lib/storeData'
 
@@ -8,6 +8,12 @@ export function ShopLogoUpload({ compact = false }: { compact?: boolean }) {
   const [logo, setLogo] = useState(() => getShopLogo())
   const [error, setError] = useState('')
   const [busy,setBusy]=useState(false)
+
+  useEffect(()=>{
+    const refresh=()=>setLogo(getShopLogo())
+    window.addEventListener('gulako-brand',refresh)
+    return()=>window.removeEventListener('gulako-brand',refresh)
+  },[])
 
   const choose = () => inputRef.current?.click()
 
