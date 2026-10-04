@@ -248,6 +248,14 @@ export function DashboardStorePage(){
   const [slugMessage,setSlugMessage]=useState(()=>validateStoreSlug(getStoreProfile().slug,getStoreProfile().slug))
   const coverInput=useRef<HTMLInputElement>(null)
 
+  useEffect(()=>{
+    void hydrateSellerData().then(()=>{
+      const next=getStoreProfile()
+      setProfile(next)
+      setSlugMessage(validateStoreSlug(next.slug,next.slug))
+    })
+  },[])
+
   const update=(key:keyof StoreProfile,value:string)=>{
     setProfile(current=>{
       const next={...current,[key]:value} as StoreProfile
