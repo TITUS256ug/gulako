@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
 import { getStoreProfile } from '../lib/storeData'
+import { backend } from '../lib/backend'
 import { Logo } from './Logo'
 
 const links = [
@@ -19,8 +20,16 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   const path = window.location.pathname
   const [logo,setLogo]=useState(()=>getShopLogo())
   const [profile,setProfile]=useState(()=>getStoreProfile())
+  const [role,setRole]=useState('seller')
+  const [plan,setPlan]=useState('free')
 
   useEffect(()=>{
+    void (async()=>{
+      const {data:{user}}=await backend.auth.getUser()
+      if(!user)return
+      const {data}=await backend.from('profiles').select('role,plan').eq('id',user.id).maybeSingle()
+      if(data){setRole(data.role);setPlan(data.plan)}
+    })()
     const refresh=()=>{
       setLogo(getShopLogo())
       setProfile(getStoreProfile())
@@ -42,16 +51,17 @@ export function DashboardShell({ children, title, subtitle, action }: { children
         <Logo />
         <div className="shop-switcher">
           {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">G</span>}
-          <div><strong>{shopName}</strong><small>Free plan · 30 products</small></div>
+          <div><strong>{shopName}</strong><small>{plan.charAt(0).toUpperCase()+plan.slice(1)} plan · 30 products</small></div>
         </div>
         <nav>
           {links.map(({ href, label, icon: Icon }) => (
             <a key={href} href={href} className={(path === href) ? 'active' : ''}><Icon size={18} /> <span>{label}</span></a>
           ))}
           <a className="sidebar-view-shop" href={previewHref} target="_blank" rel="noreferrer"><Eye size={18}/><span>View shop</span></a>
+          {(role==='founder'||role==='admin')&&<a href="/founder"><Settings size={18}/><span>Founder</span></a>}
         </nav>
         <div className="sidebar-bottom">
-          <a href="/signin"><LogOut size={18} /> <span>Sign out</span></a>
+          <button className="sidebar-signout" onClick={async()=>{await backend.auth.signOut();window.location.replace('/signin')}}><LogOut size={18} /> <span>Sign out</span></button>
         </div>
       </aside>
       <main className="dashboard-main">
