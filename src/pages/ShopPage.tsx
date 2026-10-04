@@ -4,57 +4,59 @@ import type { ChangeEvent, CSSProperties } from 'react'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { ProductCard } from '../components/ProductCard'
-import { getShopLogo } from '../lib/shopBrand'
-import { accentColors, getSellerProducts, getStoreProfile, recordStoreView } from '../lib/storeData'
+import type { Product } from '../data/mock'
+import { accentColors, fetchPublicShop, recordStoreView } from '../lib/storeData'
+import type { StoreProfile } from '../lib/storeData'
+
+type PublicShopData={
+  profile:StoreProfile
+  logo:string
+  views:number
+  products:Product[]
+}
 
 export function ShopPage({ slug }: { slug?: string }) {
-  const [profile,setProfile]=useState(()=>getStoreProfile())
-  const [products,setProducts]=useState(()=>getSellerProducts())
-  const [logo,setLogo]=useState(()=>getShopLogo())
+  const [shop,setShop]=useState<PublicShopData|null>(null)
+  const [ready,setReady]=useState(false)
   const [query,setQuery]=useState('')
   const [category,setCategory]=useState('All products')
 
   useEffect(()=>{
-    if(profile.businessName && slug===profile.slug) recordStoreView(profile.slug)
-  },[profile.businessName,profile.slug,slug])
+    let active=true
+    if(!slug){setReady(true);return}
+    fetchPublicShop(slug).then(data=>{
+      if(!active)return
+      setShop(data)
+      setReady(true)
+      if(data)void recordStoreView(slug)
+    })
+    return()=>{active=false}
+  },[slug])
 
-  useEffect(()=>{
-    const refresh=()=>{
-      setProfile(getStoreProfile())
-      setProducts(getSellerProducts())
-      setLogo(getShopLogo())
-    }
-    window.addEventListener('gulako-store',refresh)
-    window.addEventListener('gulako-products',refresh)
-    window.addEventListener('gulako-brand',refresh)
-    return()=>{
-      window.removeEventListener('gulako-store',refresh)
-      window.removeEventListener('gulako-products',refresh)
-      window.removeEventListener('gulako-brand',refresh)
-    }
-  },[])
+  const categories=useMemo(()=>['All products',...Array.from(new Set((shop?.products??[]).map(item=>item.category)))],[shop?.products])
 
-  const published=Boolean(profile.businessName && slug===profile.slug)
-  const categories=['All products',...Array.from(new Set(products.map(item=>item.category)))]
   const visibleProducts=useMemo(()=>{
+    if(!shop)return[]
     const q=query.trim().toLowerCase()
-    return products.filter(item=>{
+    return shop.products.filter(item=>{
       const matchesCategory=category==='All products'||item.category===category
       const matchesQuery=!q||(item.name+' '+item.category+' '+item.description).toLowerCase().includes(q)
       return matchesCategory&&matchesQuery
-    }).map(item=>({...item,shopName:profile.businessName||item.shopName,shopSlug:profile.slug}))
-  },[products,profile.businessName,profile.slug,query,category])
+    })
+  },[shop,query,category])
 
   const shareShop=async()=>{
     const url=window.location.href
-    if(navigator.share) await navigator.share({title:profile.businessName,url}).catch(()=>undefined)
+    if(navigator.share) await navigator.share({title:shop?.profile.businessName||'Gulako shop',url}).catch(()=>undefined)
     else {
       await navigator.clipboard.writeText(url).catch(()=>undefined)
       window.alert('Shop link copied')
     }
   }
 
-  if(!published){
+  if(!ready)return null
+
+  if(!shop){
     return <div className="app-shell">
       <Header compact/>
       <main><div className="page-container">
@@ -62,15 +64,16 @@ export function ShopPage({ slug }: { slug?: string }) {
         <section className="shop-empty-page">
           <div className="shop-empty-icon"><Store size={30}/></div>
           <span className="section-kicker">Storefront</span>
-          <h1>This shop is not published yet.</h1>
-          <p>Set up your business details in the seller dashboard, then preview your storefront here.</p>
-          <div className="home-actions"><a className="primary-button" href="/dashboard/store">Set up store</a><a className="soft-button" href="/">Back to Gulako</a></div>
+          <h1>This shop is not available.</h1>
+          <p>The seller may still be setting it up, or the shop link may have changed.</p>
+          <div className="home-actions"><a className="soft-button" href="/">Back to Gulako</a></div>
         </section>
       </div></main>
       <Footer/>
     </div>
   }
 
+  const {profile,logo}=shop
   const accent=accentColors[profile.accent]
   const whatsapp=profile.whatsapp.replace(/\D/g,'')
   const instagramUrl=profile.instagram?'https://instagram.com/'+profile.instagram.replace(/^@/,''):''
