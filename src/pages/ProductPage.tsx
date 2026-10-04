@@ -9,7 +9,7 @@ export function ProductPage({ id }: { id: string }) {
 
   if(!product){
     return <div className="app-shell"><Header/><main className="page-container product-page">
-      <a className="back-link" href={profile.businessName?'/shop/'+profile.slug:'/'}><ArrowLeft size={17}/> Back</a>
+      <a className="back-link" href={profile.businessName?'/'+profile.slug:'/'}><ArrowLeft size={17}/> Back</a>
       <section className="empty-state product-empty"><PackageSearch size={30}/><h2>Product unavailable</h2><p>This product is not currently published.</p></section>
     </main></div>
   }
@@ -21,7 +21,7 @@ export function ProductPage({ id }: { id: string }) {
   const buy=()=>{addToCart(product.id);window.location.href='/cart'}
 
   return <div className="app-shell"><Header/><main className="page-container product-page">
-    <a className="back-link" href={'/shop/'+profile.slug}><ArrowLeft size={17}/> Back to shop</a>
+    <a className="back-link" href={'/'+profile.slug}><ArrowLeft size={17}/> Back to shop</a>
     <section className="product-detail-grid">
       <div className="product-detail-image">{product.image?<img src={product.image} alt={product.name}/>:<div className="product-image-placeholder"><PackageSearch size={40}/></div>}</div>
       <div className="product-detail-copy">
