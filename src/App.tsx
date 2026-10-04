@@ -2,7 +2,6 @@ import { AuthPage } from './pages/AuthPage'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { DashboardAnalyticsPage, DashboardCustomersPage, DashboardHomePage, DashboardOrdersPage, DashboardProductsPage, DashboardSettingsPage, DashboardStorePage } from './pages/DashboardPages'
-import { ExplorePage } from './pages/ExplorePage'
 import { HomePage } from './pages/HomePage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { OrderTrackPage } from './pages/OrderTrackPage'
@@ -13,7 +12,7 @@ export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
   const parts = path.split('/').filter(Boolean)
   if (path === '/') return <HomePage />
-  if (path === '/explore') return <ExplorePage />
+  if (path === '/explore') { window.location.replace('/'); return null }
   if (path === '/pricing') { window.location.replace('/signin'); return null }
   if (path === '/signin' || path === '/login') return <AuthPage mode="signin" />
   if (path === '/signup' || path === '/register') return <AuthPage mode="signup" />
