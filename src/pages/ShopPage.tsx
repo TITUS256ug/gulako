@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { ProductCard } from '../components/ProductCard'
 import { getShopLogo } from '../lib/shopBrand'
-import { accentColors, getSellerProducts, getStoreProfile } from '../lib/storeData'
+import { accentColors, getSellerProducts, getStoreProfile, recordStoreView } from '../lib/storeData'
 
 export function ShopPage({ slug }: { slug?: string }) {
   const [profile,setProfile]=useState(()=>getStoreProfile())
@@ -13,6 +13,10 @@ export function ShopPage({ slug }: { slug?: string }) {
   const [logo,setLogo]=useState(()=>getShopLogo())
   const [query,setQuery]=useState('')
   const [category,setCategory]=useState('All products')
+
+  useEffect(()=>{
+    if(profile.businessName && slug===profile.slug) recordStoreView(profile.slug)
+  },[profile.businessName,profile.slug,slug])
 
   useEffect(()=>{
     const refresh=()=>{
