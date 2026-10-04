@@ -1,4 +1,4 @@
-import { products } from '../data/mock'
+import { getSellerProducts } from './storeData'
 
 export type CartLine = { productId: string; quantity: number }
 const KEY = 'gulako_cart'
@@ -35,8 +35,11 @@ export function updateCart(productId: string, quantity: number) {
 export function clearCart() { saveCart([]) }
 export function cartCount() { return getCart().reduce((sum, line) => sum + line.quantity, 0) }
 export function cartDetails() {
-  return getCart().map((line) => ({
-    ...line,
-    product: products.find((product) => product.id === line.productId) ?? products[0],
-  }))
+  const products=getSellerProducts()
+  return getCart()
+    .map((line) => {
+      const product=products.find((item) => item.id === line.productId)
+      return product ? { ...line, product } : null
+    })
+    .filter((line): line is NonNullable<typeof line> => Boolean(line))
 }
