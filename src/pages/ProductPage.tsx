@@ -7,6 +7,7 @@ import { accentColors, getSellerProducts, getStoreProfile } from '../lib/storeDa
 export function ProductPage({ id }: { id: string }) {
   const product=getSellerProducts().find(item=>item.id===id)
   const profile=getStoreProfile()
+  const style={ '--shop-accent': accentColors[profile.accent] } as CSSProperties
 
   if(!product){
     return <div className="app-shell customer-storefront" style={style}><Header/><main className="page-container product-page">
@@ -16,19 +17,18 @@ export function ProductPage({ id }: { id: string }) {
   }
 
   const formatted=new Intl.NumberFormat('en-UG').format(product.price)
-  const style={ '--shop-accent': accentColors[profile.accent] } as CSSProperties
   const whatsapp=profile.whatsapp.replace(/\D/g,'')
   const message=encodeURIComponent('Hello '+(profile.businessName||'seller')+', I am interested in '+product.name+'.')
   const add=()=>{addToCart(product.id);window.dispatchEvent(new Event('gulako-cart'))}
   const buy=()=>{addToCart(product.id);window.location.href='/cart'}
 
-  return <div className="app-shell"><Header/><main className="page-container product-page">
+  return <div className="app-shell customer-storefront" style={style}><Header/><main className="page-container product-page">
     <a className="back-link" href={'/'+profile.slug}><ArrowLeft size={17}/> Back to shop</a>
     <section className="product-detail-grid">
       <div className="product-detail-image">{product.image?<img src={product.image} alt={product.name}/>:<div className="product-image-placeholder"><PackageSearch size={40}/></div>}</div>
       <div className="product-detail-copy">
         <span className="category-chip inline-chip">{product.category}</span>
-        <p className="product-shop-link"><a href={'/shop/'+profile.slug}>{profile.businessName||product.shopName}</a></p>
+        <p className="product-shop-link"><a href={'/'+profile.slug}>{profile.businessName||product.shopName}</a></p>
         <h1>{product.name}</h1>
         <div className="detail-price-row"><p className="detail-price">UGX {formatted}</p>{product.negotiable&&<span className="negotiable-detail-badge">Slightly negotiable</span>}</div>
         {product.description&&<p className="detail-description">{product.description}</p>}
