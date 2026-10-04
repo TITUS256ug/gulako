@@ -1,4 +1,4 @@
-import { ArrowRight, Search, Store } from 'lucide-react'
+import { ArrowRight, Store } from 'lucide-react'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 
@@ -16,7 +16,6 @@ export function HomePage() {
               <a className="primary-button large" href="/signin">Login <ArrowRight size={18}/></a>
               <a className="soft-button large" href="/signup"><Store size={18}/> Start selling</a>
             </div>
-            <a className="landing-explore-link" href="/explore"><Search size={16}/> Explore shops</a>
           </div>
 
           <div className="landing-showcase clean-showcase">
