@@ -4,6 +4,7 @@ import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { DashboardAnalyticsPage, DashboardCustomersPage, DashboardHomePage, DashboardOrdersPage, DashboardProductsPage, DashboardSettingsPage, DashboardStorePage } from './pages/DashboardPages'
 import { DemoShopPage } from './pages/DemoShopPage'
+import { FounderPage } from './pages/FounderPage'
 import { HomePage } from './pages/HomePage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { OrderTrackPage } from './pages/OrderTrackPage'
@@ -31,6 +32,7 @@ export default function App() {
   if (path === '/dashboard/analytics') return <ProtectedRoute><DashboardAnalyticsPage /></ProtectedRoute>
   if (path === '/dashboard/store') return <ProtectedRoute><DashboardStorePage /></ProtectedRoute>
   if (path === '/dashboard/settings') return <ProtectedRoute><DashboardSettingsPage /></ProtectedRoute>
+  if (path === '/founder') return <ProtectedRoute><FounderPage /></ProtectedRoute>
   if (parts.length === 1) return <ShopPage slug={parts[0]} />
   return <HomePage />
 }
