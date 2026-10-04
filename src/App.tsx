@@ -1,3 +1,4 @@
+import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from './pages/AuthPage'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
@@ -23,13 +24,13 @@ export default function App() {
   if (path === '/checkout') return <CheckoutPage />
   if (parts[0] === 'order') return <OrderTrackPage id={parts[1] ?? 'GLK-2420'} />
   if (parts[0] === 'product') return <ProductPage id={parts[1] ?? ''} />
-  if (path === '/dashboard') return <DashboardHomePage />
-  if (path === '/dashboard/products') return <DashboardProductsPage />
-  if (path === '/dashboard/orders') return <DashboardOrdersPage />
-  if (path === '/dashboard/customers') return <DashboardCustomersPage />
-  if (path === '/dashboard/analytics') return <DashboardAnalyticsPage />
-  if (path === '/dashboard/store') return <DashboardStorePage />
-  if (path === '/dashboard/settings') return <DashboardSettingsPage />
+  if (path === '/dashboard') return <ProtectedRoute><DashboardHomePage /></ProtectedRoute>
+  if (path === '/dashboard/products') return <ProtectedRoute><DashboardProductsPage /></ProtectedRoute>
+  if (path === '/dashboard/orders') return <ProtectedRoute><DashboardOrdersPage /></ProtectedRoute>
+  if (path === '/dashboard/customers') return <ProtectedRoute><DashboardCustomersPage /></ProtectedRoute>
+  if (path === '/dashboard/analytics') return <ProtectedRoute><DashboardAnalyticsPage /></ProtectedRoute>
+  if (path === '/dashboard/store') return <ProtectedRoute><DashboardStorePage /></ProtectedRoute>
+  if (path === '/dashboard/settings') return <ProtectedRoute><DashboardSettingsPage /></ProtectedRoute>
   if (parts.length === 1) return <ShopPage slug={parts[0]} />
   return <HomePage />
 }
