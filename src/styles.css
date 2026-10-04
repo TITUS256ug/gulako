@@ -105,3 +105,35 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
 .marketplace-empty,.product-empty{min-height:390px;margin:30px 0 70px}
 .clean-auth-card{display:grid;gap:14px;align-content:center;text-align:left;padding:38px}.clean-auth-card strong{font:800 32px/1.12 'Manrope';letter-spacing:-1px;max-width:360px}.clean-auth-card>span{color:rgba(255,255,255,.78)}
 @media(max-width:620px){.brand-showcase-card{padding:26px}.brand-showcase-card>strong{font-size:24px}.shop-empty-page{min-height:58vh;padding:50px 8px}.shop-empty-page h1{font-size:39px;letter-spacing:-2px}}
+
+
+/* Typography refinement — slightly smaller, cleaner scale */
+.landing-copy h1{font-size:clamp(52px,5.4vw,82px);letter-spacing:-4.2px}
+.explore-intro h1{font-size:46px}
+.shop-hero-content h1{font-size:50px}
+.shop-empty-page h1{font-size:clamp(34px,4.2vw,56px);letter-spacing:-2.2px}
+.product-detail-copy h1{font-size:44px;letter-spacing:-1.8px}
+.auth-copy h1{font-size:46px}
+.onboarding-card h1{font-size:38px}
+.cart-title h1,.checkout-heading h1{font-size:48px;letter-spacing:-2px}
+.order-success h1{font-size:42px;letter-spacing:-1.6px}
+.dashboard-topbar h1{font-size:33px;letter-spacing:-1.2px}
+.dashboard-welcome h2{font-size:27px}
+.section-heading h2{font-size:38px}
+.brand-showcase-card>strong{font-size:27px}
+
+@media(max-width:620px){
+  .landing-copy h1{font-size:45px;letter-spacing:-3px}
+  .explore-intro h1{font-size:42px}
+  .shop-hero-content h1{font-size:31px}
+  .shop-empty-page h1{font-size:34px;letter-spacing:-1.7px}
+  .product-detail-copy h1{font-size:36px;letter-spacing:-1.5px}
+  .auth-copy h1{font-size:36px}
+  .onboarding-card h1{font-size:28px}
+  .cart-title h1,.checkout-heading h1{font-size:36px}
+  .order-success h1{font-size:34px}
+  .dashboard-topbar h1{font-size:28px}
+  .dashboard-welcome h2{font-size:23px}
+  .section-heading h2{font-size:30px}
+  .brand-showcase-card>strong{font-size:22px}
+}
