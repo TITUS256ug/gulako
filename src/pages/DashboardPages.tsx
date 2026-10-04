@@ -1,11 +1,11 @@
-import { ArrowUpRight, BarChart3, Check, CheckCircle2, Eye, ImagePlus, MessageCircle, MoreHorizontal, PackagePlus, Plus, Search, Settings2, ShoppingBag, Sparkles, Trash2, TrendingUp, Users, X } from 'lucide-react'
+import { ArrowUpRight, BarChart3, Check, CheckCircle2, Copy, Eye, ImagePlus, Link2, MessageCircle, MoreHorizontal, PackagePlus, Plus, Search, Settings2, ShoppingBag, Sparkles, Trash2, TrendingUp, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { DashboardShell } from '../components/DashboardShell'
 import { PricingSection } from '../components/PricingSection'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
 import { fileToDataUrl, getShopLogo } from '../lib/shopBrand'
-import { accentColors, addSellerProduct, deleteSellerProduct, getSellerProducts, getStoreProfile, saveStoreProfile, slugifyStoreName } from '../lib/storeData'
+import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, saveStoreProfile, slugifyStoreName, validateStoreSlug } from '../lib/storeData'
 import type { AccentName, StoreProfile } from '../lib/storeData'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
@@ -14,24 +14,28 @@ function useStoreSnapshot(){
   const [profile,setProfile]=useState(()=>getStoreProfile())
   const [products,setProducts]=useState(()=>getSellerProducts())
   const [logo,setLogo]=useState(()=>getShopLogo())
+  const [views,setViews]=useState(()=>getStoreViews())
 
   useEffect(()=>{
     const refresh=()=>{
       setProfile(getStoreProfile())
       setProducts(getSellerProducts())
       setLogo(getShopLogo())
+      setViews(getStoreViews())
     }
     window.addEventListener('gulako-store',refresh)
     window.addEventListener('gulako-products',refresh)
     window.addEventListener('gulako-brand',refresh)
+    window.addEventListener('gulako-analytics',refresh)
     return()=>{
       window.removeEventListener('gulako-store',refresh)
       window.removeEventListener('gulako-products',refresh)
       window.removeEventListener('gulako-brand',refresh)
+      window.removeEventListener('gulako-analytics',refresh)
     }
   },[])
 
-  return {profile,products,logo}
+  return {profile,products,logo,views}
 }
 
 function StoreHealth({profile,productCount,logo}:{profile:StoreProfile;productCount:number;logo:string}){
@@ -70,7 +74,7 @@ function StoreHealth({profile,productCount,logo}:{profile:StoreProfile;productCo
 }
 
 export function DashboardHomePage(){
-  const {profile,products,logo}=useStoreSnapshot()
+  const {profile,products,logo,views}=useStoreSnapshot()
   const count=products.length
   const usage=Math.min(100,(count/30)*100)
 
@@ -91,7 +95,7 @@ export function DashboardHomePage(){
     <section className="metric-grid premium-metrics">
       <article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>0</strong><em>No data yet</em></div></article>
       <article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Sales</small><strong>UGX 0</strong><em>No data yet</em></div></article>
-      <article><span className="metric-icon"><Eye size={20}/></span><div><small>Shop views</small><strong>0</strong><em>No data yet</em></div></article>
+      <article><span className="metric-icon"><Eye size={20}/></span><div><small>Shop views</small><strong>{views}</strong><em>Starts at 40</em></div></article>
       <article><span className="metric-icon"><Users size={20}/></span><div><small>Customers</small><strong>0</strong><em>No data yet</em></div></article>
     </section>
 
@@ -132,6 +136,7 @@ export function DashboardProductsPage(){
     const price=Number(form.get('price')||0)
     const stock=Number(form.get('stock')||0)
     const description=String(form.get('description')||'').trim()
+    const negotiable=form.get('negotiable')==='on'
     if(!name || !category || price<=0){setError('Add a product name, category and valid price.');return}
 
     addSellerProduct({
@@ -144,6 +149,7 @@ export function DashboardProductsPage(){
       image,
       description,
       stock:Math.max(0,stock),
+      negotiable,
     })
     closeForm()
   }
@@ -162,6 +168,7 @@ export function DashboardProductsPage(){
           <label className="wide"><span>Product name</span><input name="name" required placeholder="e.g. Classic leather bag"/></label>
           <label><span>Category</span><input name="category" required placeholder="e.g. Fashion"/></label>
           <label><span>Price (UGX)</span><input name="price" required type="number" min="1" placeholder="85000"/></label>
+          <label className="negotiable-option"><span>Price option</span><span className="check-row negotiable-check"><input name="negotiable" type="checkbox"/> Slightly negotiable</span></label>
           <label><span>Stock</span><input name="stock" type="number" min="0" defaultValue="1"/></label>
           <label className="wide"><span>Description</span><textarea name="description" placeholder="Tell customers about this product"/></label>
         </div>
@@ -175,8 +182,8 @@ export function DashboardProductsPage(){
       {products.length ? <div className="inventory-grid">
         {products.map(p=><article className="inventory-card" key={p.id}>
           <div className="inventory-image">{p.image?<img src={p.image} alt={p.name}/>:<PackagePlus size={28}/>}</div>
-          <div className="inventory-body"><div><small>{p.category}</small><strong>{p.name}</strong></div><button aria-label="Product options"><MoreHorizontal size={18}/></button><span>UGX {money(p.price)}</span><em>{p.stock} in stock</em></div>
-          <button className="inventory-delete" onClick={()=>deleteSellerProduct(p.id)}><Trash2 size={14}/> Remove</button>
+          <div className="inventory-body"><div><small>{p.category}</small><strong>{p.name}</strong></div><button aria-label="Product options"><MoreHorizontal size={18}/></button><span>UGX {money(p.price)}</span><em>{p.negotiable?'Slightly negotiable':`${p.stock} in stock`}</em></div>
+          <div className="inventory-card-actions"><button className="inventory-duplicate" onClick={()=>duplicateSellerProduct(p.id)}><Copy size={14}/> Duplicate</button><button className="inventory-delete" onClick={()=>deleteSellerProduct(p.id)}><Trash2 size={14}/> Remove</button></div>
         </article>)}
         {products.length<30&&<button className="add-product-card" onClick={openForm}><PackagePlus size={26}/><strong>Add product</strong><span>{30-products.length} slots left on Free</span></button>}
       </div> : <button className="add-product-card empty-add-product" onClick={openForm}><PackagePlus size={30}/><strong>Add your first product</strong><span>30 product slots available on Free</span></button>}
@@ -203,9 +210,11 @@ export function DashboardCustomersPage(){
 }
 
 export function DashboardAnalyticsPage(){
+  const {views}=useStoreSnapshot()
+  const added=Math.max(0,views-40)
   return <DashboardShell title="Analytics" subtitle="Understand what’s working.">
-    <section className="metric-grid premium-metrics"><article><span className="metric-icon"><BarChart3 size={20}/></span><div><small>Conversion</small><strong>0%</strong><em>No data yet</em></div></article><article><span className="metric-icon"><Eye size={20}/></span><div><small>Views</small><strong>0</strong><em>No data yet</em></div></article><article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>0</strong><em>No data yet</em></div></article><article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Revenue</small><strong>UGX 0</strong><em>No data yet</em></div></article></section>
-    <section className="dash-card premium-card analytics-card"><div className="dash-card-head"><div><h2>Sales trend</h2><p>Analytics starts when your shop receives traffic.</p></div></div><div className="analytics-empty"><BarChart3 size={30}/><span>No activity to chart yet</span></div></section>
+    <section className="metric-grid premium-metrics"><article><span className="metric-icon"><BarChart3 size={20}/></span><div><small>Conversion</small><strong>0%</strong><em>Orders not connected yet</em></div></article><article><span className="metric-icon"><Eye size={20}/></span><div><small>Store views</small><strong>{views}</strong><em>+{added} since baseline</em></div></article><article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>0</strong><em>No orders yet</em></div></article><article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Revenue</small><strong>UGX 0</strong><em>No sales yet</em></div></article></section>
+    <section className="dash-card premium-card analytics-card"><div className="dash-card-head"><div><h2>Store visits</h2><p>Your counter begins at 40 and increases as new sessions visit your storefront.</p></div><span className="analytics-total">{views}</span></div><div className="analytics-view-visual"><div className="analytics-view-orb"><Eye size={28}/><strong>{views}</strong><span>Total storefront views</span></div><div className="analytics-view-copy"><strong>+{added}</strong><span>views recorded after your starting baseline</span><small>Full cross-device analytics will sync when the database is connected.</small></div></div></section>
   </DashboardShell>
 }
 
@@ -213,19 +222,29 @@ export function DashboardStorePage(){
   const [profile,setProfile]=useState(()=>getStoreProfile())
   const [saved,setSaved]=useState(false)
   const [coverError,setCoverError]=useState('')
+  const [slugMessage,setSlugMessage]=useState(()=>validateStoreSlug(getStoreProfile().slug,getStoreProfile().slug))
   const coverInput=useRef<HTMLInputElement>(null)
 
   const update=(key:keyof StoreProfile,value:string)=>{
     setProfile(current=>{
       const next={...current,[key]:value} as StoreProfile
-      if(key==='businessName' && (current.slug==='my-shop' || !current.slug)) next.slug=slugifyStoreName(value)
+      if(key==='businessName' && (current.slug==='myshop' || !current.slug)) {
+        next.slug=slugifyStoreName(value)
+        setSlugMessage(validateStoreSlug(next.slug,current.slug))
+      }
+      if(key==='slug') setSlugMessage(validateStoreSlug(String(value),current.slug))
       return next
     })
     setSaved(false)
   }
 
   const persist=(next=profile)=>{
-    saveStoreProfile(next)
+    const checked=validateStoreSlug(next.slug,getStoreProfile().slug)
+    setSlugMessage(checked)
+    if(!checked.valid)return
+    const cleaned={...next,slug:checked.slug}
+    setProfile(cleaned)
+    saveStoreProfile(cleaned)
     setSaved(true)
     window.setTimeout(()=>setSaved(false),2400)
   }
@@ -250,7 +269,7 @@ export function DashboardStorePage(){
     setSaved(true)
   }
 
-  const previewHref=profile.businessName?`/shop/${profile.slug}`:'/dashboard/store'
+  const previewHref=profile.businessName&&slugMessage.valid?`/${profile.slug}`:'/dashboard/store'
 
   return <DashboardShell title="Store" subtitle="Customize how your business appears." action={<a className="soft-button" href={previewHref}><Eye size={17}/> Preview shop</a>}>
     <div className="dashboard-two-col store-editor-layout">
@@ -259,9 +278,9 @@ export function DashboardStorePage(){
         <ShopLogoUpload/>
         <div className="form-grid">
           <label className="wide"><span>Business name</span><input value={profile.businessName} onChange={e=>update('businessName',e.target.value)} placeholder="Your business name"/></label>
-          <label><span>Category</span><input value={profile.category} onChange={e=>update('category',e.target.value)} placeholder="Business category"/></label>
+          <label><span>Category</span><select value={profile.category} onChange={e=>update('category',e.target.value)}><option value="">Select category</option>{BUSINESS_CATEGORIES.map(item=><option key={item} value={item}>{item}</option>)}</select></label>
           <label><span>Location</span><input value={profile.location} onChange={e=>update('location',e.target.value)} placeholder="Town, city or area"/></label>
-          <label className="wide"><span>Shop link</span><div className="slug-input"><span>/shop/</span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))}/></div></label>
+          <label className="wide"><span>Shop link</span><div className="slug-input clean-shop-link"><span>gulako.site/</span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none"/></div><small className={slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugMessage.valid?<><Check size={12}/> {slugMessage.message}</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Letters and numbers only. No spaces, commas or symbols.</small></label>
           <label className="wide"><span>Description</span><textarea value={profile.description} onChange={e=>update('description',e.target.value)} placeholder="Describe your business"/></label>
           <label className="wide"><span>WhatsApp</span><input value={profile.whatsapp} onChange={e=>update('whatsapp',e.target.value)} placeholder="+256..."/></label>
           <label className="wide"><span>Google Maps / Plus Code</span><input value={profile.mapsLink} onChange={e=>update('mapsLink',e.target.value)} placeholder="Paste link or code"/></label>
@@ -269,7 +288,7 @@ export function DashboardStorePage(){
           <label><span>Instagram</span><input value={profile.instagram} onChange={e=>update('instagram',e.target.value)} placeholder="@yourbusiness"/></label>
           <label className="wide"><span>Delivery information</span><textarea value={profile.deliveryInfo} onChange={e=>update('deliveryInfo',e.target.value)} placeholder="Delivery areas, fees and pickup information"/></label>
         </div>
-        <button className="primary-button" onClick={()=>persist()}><CheckCircle2 size={17}/> Save changes</button>
+        <button className="primary-button" onClick={()=>persist()} disabled={!slugMessage.valid}><CheckCircle2 size={17}/> Save changes</button>
       </section>
 
       <aside className="dash-card premium-card brand-panel">
