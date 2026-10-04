@@ -1,0 +1,12 @@
+{
+  "name": "Gulako",
+  "short_name": "Gulako",
+  "description": "Modern local commerce for Uganda.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfaff",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {"src": "/gulako-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
