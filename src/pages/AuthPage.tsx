@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { InstallAppButton } from '../components/InstallAppButton'
 import { Logo } from '../components/Logo'
-import { backend } from '../lib/backend'
+import { backend, backendConfigured } from '../lib/backend'
 
 export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
   const [showPassword, setShowPassword] = useState(false)
@@ -14,6 +14,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
 
   const submit=async(e:FormEvent<HTMLFormElement>)=>{
     e.preventDefault()
+    if(!backendConfigured){setError('Authentication is being connected. Please try again shortly.');return}
     setBusy(true);setError('');setMessage('')
     const form=new FormData(e.currentTarget)
     const email=String(form.get('email')||'').trim()
@@ -43,6 +44,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
 
   const social=async(provider:'google'|'tiktok')=>{
     setError('')
+    if(!backendConfigured){setError('Authentication is being connected. Please try again shortly.');return}
     const chosen=provider==='google'?'google':'custom:tiktok'
     const {error}=await backend.auth.signInWithOAuth({
       provider:chosen as never,
@@ -52,6 +54,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
   }
 
   const reset=async()=>{
+    if(!backendConfigured){setError('Authentication is being connected. Please try again shortly.');return}
     const email=window.prompt('Enter your email address')
     if(!email)return
     const {error}=await backend.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/signin'})
