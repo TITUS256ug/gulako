@@ -33,7 +33,6 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
         {!compact && (
           <nav className="desktop-nav" aria-label="Main navigation">
             <a href="/explore">Explore</a>
-            <a href="/shop/nile-ai-solutions">Demo shop</a>
           </nav>
         )}
 
@@ -63,7 +62,6 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
       {open && (
         <div className="mobile-menu">
           <a href="/explore">Explore</a>
-          <a href="/shop/nile-ai-solutions">Demo shop</a>
           <a href="/signin">Sign in</a>
           <a href="/signup">Start selling</a>
         </div>
