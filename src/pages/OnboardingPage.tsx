@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, Building2, Check, Clock, Instagram, Link2, MapPi
 import { useState } from 'react'
 import { Logo } from '../components/Logo'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
+import { BUSINESS_CATEGORIES } from '../lib/storeData'
 
 const steps = ['Business', 'Contact', 'Social', 'Finish']
 
@@ -48,20 +49,15 @@ export function OnboardingPage() {
                   <span>Category</span>
                   <select defaultValue="">
                     <option value="" disabled>Select category</option>
-                    <option>Tech & gadgets</option>
-                    <option>Fashion</option>
-                    <option>Beauty</option>
-                    <option>Food</option>
-                    <option>Home & living</option>
-                    <option>Services</option>
+                    {BUSINESS_CATEGORIES.map(item => <option key={item} value={item}>{item}</option>)}
                   </select>
                 </label>
 
                 <label>
                   <span>Shop link</span>
                   <div className="slug-input">
-                    <span>gulako.app/shop/</span>
-                    <input placeholder="your-shop-name" />
+                    <span>gulako.site/</span>
+                    <input placeholder="yourshopname" />
                   </div>
                 </label>
 
