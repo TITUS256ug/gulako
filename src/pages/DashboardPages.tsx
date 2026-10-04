@@ -217,7 +217,7 @@ export function DashboardStorePage(){
 
   const update=(key:keyof StoreProfile,value:string)=>{
     setProfile(current=>{
-      const next={...current,[key]:value}
+      const next={...current,[key]:value} as StoreProfile
       if(key==='businessName' && (current.slug==='my-shop' || !current.slug)) next.slug=slugifyStoreName(value)
       return next
     })
