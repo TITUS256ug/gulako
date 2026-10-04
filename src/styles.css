@@ -263,3 +263,25 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
 @media(max-width:620px){
   .inventory-primary-actions{gap:5px}.inventory-edit,.inventory-duplicate{padding:0 8px!important;font-size:9px!important}
 }
+
+
+/* Compact storefront product cards */
+.customer-storefront .product-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.customer-storefront .product-image-wrap{height:220px}
+.customer-storefront .product-info{padding:15px}
+.customer-storefront .product-title{font-size:16px}
+.customer-storefront .product-description{font-size:12px;min-height:36px}
+.customer-storefront .product-bottom{margin-top:13px}
+.customer-storefront .price{font-size:15px}
+.customer-storefront .round-action{width:37px;height:37px;border-radius:11px}
+
+@media(max-width:1180px){
+  .customer-storefront .product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .customer-storefront .product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .customer-storefront .product-image-wrap{height:165px}
+  .customer-storefront .product-info{padding:11px}
+  .customer-storefront .product-title{font-size:13px}
+  .customer-storefront .price{font-size:12px}
+}
