@@ -1,7 +1,6 @@
 import { ArrowRight, Search, Store } from 'lucide-react'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
-import { products } from '../data/mock'
 
 export function HomePage() {
   return (
@@ -20,21 +19,14 @@ export function HomePage() {
             <a className="landing-explore-link" href="/explore"><Search size={16}/> Explore shops</a>
           </div>
 
-          <div className="landing-showcase">
+          <div className="landing-showcase clean-showcase">
             <div className="landing-orb orb-one"/>
             <div className="landing-orb orb-two"/>
-            <div className="landing-phone">
-              <div className="landing-phone-head">
-                <span className="mini-avatar">N</span>
-                <div><strong>Nile AI Solutions</strong><small>Ntinda, Kampala</small></div>
-              </div>
-              <img src={products[0].image} alt="Featured product"/>
-              <div className="landing-phone-copy">
-                <small>Audio</small>
-                <strong>Studio Wireless Headphones</strong>
-                <span>UGX 285,000</span>
-              </div>
-              <div className="landing-phone-actions"><button>View product</button><button>WhatsApp</button></div>
+            <div className="brand-showcase-card">
+              <div className="brand-showcase-mark">g</div>
+              <span>One link for your business.</span>
+              <strong>Storefront. Orders. Customers.</strong>
+              <a href="/signup">Create your shop <ArrowRight size={17}/></a>
             </div>
           </div>
         </section>
