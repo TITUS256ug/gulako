@@ -1,22 +1,40 @@
 import { ArrowLeft, Check, MessageCircle, PackageSearch, ShieldCheck, ShoppingBag } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Header } from '../components/Header'
+import type { Product } from '../data/mock'
 import { addToCart } from '../lib/cart'
-import { accentColors, getSellerProducts, getStoreProfile } from '../lib/storeData'
+import { accentColors, fetchPublicProduct } from '../lib/storeData'
+import type { StoreProfile } from '../lib/storeData'
+
+type ProductData={product:Product;profile:StoreProfile;logo:string}
 
 export function ProductPage({ id }: { id: string }) {
-  const product=getSellerProducts().find(item=>item.id===id)
-  const profile=getStoreProfile()
-  const style={ '--shop-accent': accentColors[profile.accent] } as CSSProperties
+  const [data,setData]=useState<ProductData|null>(null)
+  const [ready,setReady]=useState(false)
 
-  if(!product){
-    return <div className="app-shell customer-storefront" style={style}><Header/><main className="page-container product-page">
-      <a className="back-link" href={profile.businessName?'/'+profile.slug:'/'}><ArrowLeft size={17}/> Back</a>
+  useEffect(()=>{
+    let active=true
+    fetchPublicProduct(id).then(result=>{
+      if(!active)return
+      setData(result)
+      setReady(true)
+    })
+    return()=>{active=false}
+  },[id])
+
+  if(!ready)return null
+
+  if(!data){
+    return <div className="app-shell"><Header/><main className="page-container product-page">
+      <a className="back-link" href="/"><ArrowLeft size={17}/> Back</a>
       <section className="empty-state product-empty"><PackageSearch size={30}/><h2>Product unavailable</h2><p>This product is not currently published.</p></section>
     </main></div>
   }
 
+  const {product,profile}=data
   const formatted=new Intl.NumberFormat('en-UG').format(product.price)
+  const style={ '--shop-accent': accentColors[profile.accent] } as CSSProperties
   const whatsapp=profile.whatsapp.replace(/\D/g,'')
   const message=encodeURIComponent('Hello '+(profile.businessName||'seller')+', I am interested in '+product.name+'.')
   const add=()=>{addToCart(product.id);window.dispatchEvent(new Event('gulako-cart'))}
