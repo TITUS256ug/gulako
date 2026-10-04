@@ -1,6 +1,7 @@
 import { ArrowRight, Eye, LockKeyhole, Mail, Music2 } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { InstallAppButton } from '../components/InstallAppButton'
 import { Logo } from '../components/Logo'
 
 export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
@@ -31,6 +32,9 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
         <button className="social-auth google" onClick={continueDemo}><span className="social-letter">G</span> Continue with Google</button>
         <button className="social-auth tiktok" onClick={continueDemo}><Music2 size={19}/> Continue with TikTok</button>
       </div>
+
+      <a className="demo-shop-link" href="/demo">View demo shop</a>
+      <InstallAppButton />
 
       <p className="auth-switch">{isSignup ? 'Already have an account?' : 'New to Gulako?'} <a href={isSignup?'/signin':'/signup'}>{isSignup?'Sign in':'Create account'}</a></p>
       <small className="auth-legal">By continuing, you agree to Gulako's terms and privacy policy.</small>
