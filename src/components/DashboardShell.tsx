@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Boxes, Eye, LayoutDashboard, LogOut, Package, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
+import { BarChart3, Bell, Boxes, Eye, LayoutDashboard, LogOut, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
@@ -51,7 +51,6 @@ export function DashboardShell({ children, title, subtitle, action }: { children
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <a href={previewHref}><Package size={18} /> <span>View shop</span></a>
           <a href="/signin"><LogOut size={18} /> <span>Sign out</span></a>
         </div>
       </aside>
