@@ -29,8 +29,8 @@ export function DashboardShell({ children, title, subtitle, action }: { children
       <aside className="dashboard-sidebar">
         <Logo />
         <div className="shop-switcher">
-          {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">N</span>}
-          <div><strong>Nile AI Solutions</strong><small>Free plan · 30 products</small></div>
+          {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">G</span>}
+          <div><strong>Your shop</strong><small>Free plan · 30 products</small></div>
         </div>
         <nav>
           {links.map(({ href, label, icon: Icon }) => (
@@ -38,7 +38,7 @@ export function DashboardShell({ children, title, subtitle, action }: { children
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <a href="/shop/nile-ai-solutions"><Package size={18} /> <span>View shop</span></a>
+          <a href="/dashboard/store"><Package size={18} /> <span>View shop</span></a>
           <a href="/signin"><LogOut size={18} /> <span>Sign out</span></a>
         </div>
       </aside>
