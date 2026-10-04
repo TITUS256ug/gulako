@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Boxes, LayoutDashboard, LogOut, Package, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
+import { BarChart3, Bell, Boxes, Eye, LayoutDashboard, LogOut, Package, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
@@ -34,7 +34,7 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   },[])
 
   const shopName = profile.businessName || 'Your shop'
-  const previewHref = profile.businessName ? `/shop/${profile.slug}` : '/dashboard/store'
+  const previewHref = profile.businessName ? `/${profile.slug}` : '/dashboard/store'
 
   return (
     <div className="dashboard-shell">
@@ -44,6 +44,7 @@ export function DashboardShell({ children, title, subtitle, action }: { children
           {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">G</span>}
           <div><strong>{shopName}</strong><small>Free plan · 30 products</small></div>
         </div>
+        <a className="sidebar-view-shop" href={previewHref}><Eye size={17}/><span>View shop</span></a>
         <nav>
           {links.map(({ href, label, icon: Icon }) => (
             <a key={href} href={href} className={(path === href) ? 'active' : ''}><Icon size={18} /> <span>{label}</span></a>
