@@ -11,7 +11,7 @@ export function CheckoutPage() {
         <ShoppingBag size={30}/>
         <h2>Your cart is empty</h2>
         <p>Add a product before continuing to checkout.</p>
-        <a className="primary-button" href="/explore">Explore Gulako</a>
+        <a className="primary-button" href="/">Back to Gulako</a>
       </section>
     </main></div>
   }
