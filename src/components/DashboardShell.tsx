@@ -1,5 +1,7 @@
 import { BarChart3, Bell, Boxes, LayoutDashboard, LogOut, Package, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
+import { getShopLogo } from '../lib/shopBrand'
 import { Logo } from './Logo'
 
 const links = [
@@ -14,19 +16,30 @@ const links = [
 
 export function DashboardShell({ children, title, subtitle, action }: { children: ReactNode; title: string; subtitle?: string; action?: ReactNode }) {
   const path = window.location.pathname
+  const [logo,setLogo]=useState(()=>getShopLogo())
+
+  useEffect(()=>{
+    const refresh=()=>setLogo(getShopLogo())
+    window.addEventListener('gulako-brand',refresh)
+    return()=>window.removeEventListener('gulako-brand',refresh)
+  },[])
+
   return (
     <div className="dashboard-shell">
       <aside className="dashboard-sidebar">
         <Logo />
-        <div className="shop-switcher"><span className="dash-avatar">N</span><div><strong>Nile AI Solutions</strong><small>Free plan</small></div></div>
+        <div className="shop-switcher">
+          {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">N</span>}
+          <div><strong>Nile AI Solutions</strong><small>Free plan · 30 products</small></div>
+        </div>
         <nav>
           {links.map(({ href, label, icon: Icon }) => (
-            <a key={href} href={href} className={(path === href) ? 'active' : ''}><Icon size={18} /> {label}</a>
+            <a key={href} href={href} className={(path === href) ? 'active' : ''}><Icon size={18} /> <span>{label}</span></a>
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <a href="/shop/nile-ai-solutions"><Package size={18} /> View shop</a>
-          <a href="/signin"><LogOut size={18} /> Sign out</a>
+          <a href="/shop/nile-ai-solutions"><Package size={18} /> <span>View shop</span></a>
+          <a href="/signin"><LogOut size={18} /> <span>Sign out</span></a>
         </div>
       </aside>
       <main className="dashboard-main">
