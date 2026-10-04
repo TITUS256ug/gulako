@@ -27,6 +27,6 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
       <p className="auth-switch">{isSignup ? 'Already have an account?' : 'New to Gulako?'} <a href={isSignup?'/signin':'/signup'}>{isSignup?'Sign in':'Create free account'}</a></p>
       <small className="auth-legal">By continuing, you agree to Gulako's terms and privacy policy.</small>
     </section>
-    <aside className="auth-visual"><div className="auth-gradient"/><div className="auth-showcase-card"><div className="showcase-top"><span className="mini-avatar">N</span><div><strong>Nile AI Solutions</strong><small>gulako.shop/nile-ai-solutions</small></div></div><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1000&q=86" alt="Product"/><div className="auth-card-bottom"><strong>Your shop. Your customers.</strong><span>Share anywhere →</span></div></div></aside>
+    <aside className="auth-visual"><div className="auth-gradient"/><div className="auth-showcase-card clean-auth-card"><div className="brand-showcase-mark">g</div><strong>Run your shop from one place.</strong><span>Products · Orders · Customers</span></div></aside>
   </div>
 }
