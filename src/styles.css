@@ -199,3 +199,37 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
   .health-premium-body{grid-template-columns:1fr}.health-ring{margin:0 auto}.health-checklist{width:100%}
   .brand-panel{position:static}.cover-upload{height:150px}
 }
+
+
+/* Shop links, analytics, negotiation and duplication */
+.sidebar-view-shop{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 16px;padding:11px 12px;border-radius:13px;background:linear-gradient(135deg,var(--purple),var(--purple-2));color:#fff;font-size:12px;font-weight:800;box-shadow:0 10px 24px rgba(109,40,217,.18)}
+.sidebar-view-shop:hover{transform:translateY(-1px);box-shadow:0 13px 28px rgba(109,40,217,.24)}
+.clean-shop-link span{font-weight:800;color:var(--text)}
+.slug-status{display:flex;align-items:center;gap:5px;font-size:10px!important;font-weight:800!important;margin-top:2px}
+.slug-status.available{color:var(--green)}.slug-status.unavailable{color:var(--red)}
+.field-hint{font-size:10px!important;font-weight:500!important;color:var(--muted)!important}
+.primary-button:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+.negotiable-option{align-self:end}
+.negotiable-check{min-height:50px;padding:0 14px;border:1px solid var(--border);border-radius:13px;background:var(--surface-2);display:flex!important;align-items:center!important;gap:9px!important;color:var(--text)!important;font-weight:700!important}
+.negotiable-check input{width:17px;height:17px;accent-color:var(--purple-2)}
+.negotiable-badge{position:absolute;left:14px;bottom:14px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.92);color:var(--purple-2);font-size:10px;font-weight:900;backdrop-filter:blur(8px);box-shadow:0 7px 18px rgba(41,25,66,.1)}
+.detail-price-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:21px 0}
+.detail-price-row .detail-price{margin:0}
+.negotiable-detail-badge{padding:7px 10px;border-radius:999px;background:var(--purple-soft);color:var(--purple-2);font-size:11px;font-weight:900}
+
+.inventory-card-actions{display:flex;justify-content:space-between;align-items:center;padding:0 12px 12px;gap:7px}
+.inventory-card-actions button{border:0;background:transparent;font-size:10px;font-weight:800;display:flex;align-items:center;gap:5px;padding:4px}
+.inventory-duplicate{color:var(--purple-2)}.inventory-card-actions .inventory-delete{margin:0;color:var(--red)}
+
+.analytics-total{font:800 30px 'Manrope';color:var(--purple-2)}
+.analytics-view-visual{min-height:250px;display:grid;grid-template-columns:220px 1fr;gap:28px;align-items:center;padding:24px;border-radius:22px;background:linear-gradient(135deg,var(--surface-2),var(--purple-soft))}
+.analytics-view-orb{width:180px;height:180px;border-radius:50%;display:grid;place-items:center;align-content:center;gap:4px;margin:auto;background:radial-gradient(circle at 35% 28%,#a855f7,#6d28d9 62%,#4c1d95);color:#fff;box-shadow:0 24px 55px rgba(109,40,217,.22)}
+.analytics-view-orb strong{font:800 34px 'Manrope'}.analytics-view-orb span{font-size:10px;color:rgba(255,255,255,.82)}
+.analytics-view-copy{display:grid;gap:6px}.analytics-view-copy strong{font:800 34px 'Manrope';color:var(--purple-2)}.analytics-view-copy span{font-size:14px;font-weight:700}.analytics-view-copy small{color:var(--muted);max-width:420px;line-height:1.55}
+
+@media(max-width:620px){
+  .sidebar-view-shop{display:none}
+  .analytics-view-visual{grid-template-columns:1fr;padding:18px}.analytics-view-orb{width:145px;height:145px}.analytics-view-copy{text-align:center}
+  .negotiable-badge{left:9px;bottom:9px;font-size:8px;padding:5px 7px}
+}
