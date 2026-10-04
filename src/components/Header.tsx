@@ -30,6 +30,8 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
       <div className="header-inner">
         <Logo />
 
+        {!compact && <div className="header-spacer" />}
+
         {compact && (
           <label className="global-search" aria-label="Search Gulako">
             <Search size={18} />
