@@ -466,3 +466,23 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
   .demo-shop-hero h1{font-size:34px}
   .demo-shop-badge{align-self:flex-start}
 }
+
+
+/* iPhone form stability: prevent Safari input-focus zoom */
+@media(max-width:900px){
+  input, select, textarea{
+    font-size:16px!important;
+  }
+  .input-shell input,
+  .auth-form input,
+  .form-grid input,
+  .form-grid select,
+  .form-grid textarea,
+  .dashboard-search input,
+  .catalog-search input,
+  .global-search input,
+  .big-search input,
+  .slug-input input{
+    font-size:16px!important;
+  }
+}
