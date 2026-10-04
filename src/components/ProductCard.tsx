@@ -5,7 +5,7 @@ import { addToCart } from '../lib/cart'
 export function ProductCard({ product }: { product: Product }) {
   const formatted = new Intl.NumberFormat('en-UG').format(product.price)
   const add = () => {
-    addToCart(product.id)
+    addToCart(product)
     window.dispatchEvent(new Event('gulako-cart'))
   }
   return (
