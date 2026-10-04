@@ -4,11 +4,27 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { DashboardShell } from '../components/DashboardShell'
 import { PricingSection } from '../components/PricingSection'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
+import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
 import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, hydrateSellerData, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
 import type { AccentName, StoreProfile } from '../lib/storeData'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
+
+type Plan='free'|'pro'|'business'
+function useAccountPlan(){
+  const [plan,setPlan]=useState<Plan>('free')
+  useEffect(()=>{
+    void (async()=>{
+      const {data:{user}}=await backend.auth.getUser()
+      if(!user)return
+      const {data}=await backend.from('profiles').select('plan').eq('id',user.id).maybeSingle()
+      if(data?.plan)setPlan(data.plan as Plan)
+    })()
+  },[])
+  const limit=plan==='free'?30:plan==='pro'?250:null
+  return{plan,limit}
+}
 
 function useStoreSnapshot(){
   const [profile,setProfile]=useState(()=>getStoreProfile())
@@ -76,18 +92,20 @@ function StoreHealth({profile,productCount,logo}:{profile:StoreProfile;productCo
 
 export function DashboardHomePage(){
   const {profile,products,logo,views}=useStoreSnapshot()
+  const {plan,limit}=useAccountPlan()
   const count=products.length
-  const usage=Math.min(100,(count/30)*100)
+  const usage=limit?Math.min(100,(count/limit)*100):100
+  const planLabel=plan.charAt(0).toUpperCase()+plan.slice(1)
 
   return <DashboardShell title="Overview" subtitle="A quick look at your shop today." action={<a className="primary-button" href="/dashboard/products?add=1"><Plus size={17}/>Add product</a>}>
     <section className="dashboard-welcome">
       <div>
-        <span className="dashboard-kicker"><Sparkles size={15}/> Free plan</span>
+        <span className="dashboard-kicker"><Sparkles size={15}/> {planLabel} plan</span>
         <h2>{profile.businessName ? `Grow ${profile.businessName}.` : 'Build your shop.'}</h2>
-        <p>{count} of 30 products active · unlimited orders.</p>
+        <p>{limit?`${count} of ${limit} products active`:`${count} products active · unlimited products`} · unlimited orders.</p>
       </div>
       <div className="plan-usage">
-        <div className="plan-usage-row"><span>Product capacity</span><strong>{count} / 30</strong></div>
+        <div className="plan-usage-row"><span>Product capacity</span><strong>{limit?`${count} / ${limit}`:`${count} / Unlimited`}</strong></div>
         <div className="plan-progress"><span style={{width:`${usage}%`}}/></div>
         <a href="/dashboard/settings">View plans <ArrowUpRight size={14}/></a>
       </div>
@@ -112,6 +130,7 @@ export function DashboardHomePage(){
 
 export function DashboardProductsPage(){
   const {profile,products}=useStoreSnapshot()
+  const {plan,limit}=useAccountPlan()
   const [showForm,setShowForm]=useState(()=>new URLSearchParams(window.location.search).get('add')==='1')
   const [editingId,setEditingId]=useState<string|null>(null)
   const [image,setImage]=useState('')
@@ -149,7 +168,7 @@ export function DashboardProductsPage(){
 
   const submit=(e:FormEvent<HTMLFormElement>)=>{
     e.preventDefault()
-    if(products.length>=30){setError('Free plan supports up to 30 active products.');return}
+    if(!editingId && limit!==null && products.length>=limit){setError(`${plan.charAt(0).toUpperCase()+plan.slice(1)} plan supports up to ${limit} active products.`);return}
     const form=new FormData(e.currentTarget)
     const name=String(form.get('name')||'').trim()
     const category=String(form.get('category')||'').trim()
@@ -200,14 +219,14 @@ export function DashboardProductsPage(){
     </section>}
 
     <section className="dash-card premium-card">
-      <div className="product-toolbar"><label className="dashboard-search"><Search size={17}/><input placeholder="Search products"/></label><span>{products.length} / 30 active on Free</span></div>
+      <div className="product-toolbar"><label className="dashboard-search"><Search size={17}/><input placeholder="Search products"/></label><span>{limit?`${products.length} / ${limit} active on ${plan}`:`${products.length} active · unlimited on Business`}</span></div>
       {products.length ? <div className="inventory-grid">
         {products.map(p=><article className="inventory-card" key={p.id}>
           <div className="inventory-image">{p.image?<img src={p.image} alt={p.name}/>:<PackagePlus size={28}/>}</div>
           <div className="inventory-body"><div><small>{p.category}</small><strong>{p.name}</strong></div><button aria-label="Product options"><MoreHorizontal size={18}/></button><span>UGX {money(p.price)}</span><em>{p.negotiable?'Slightly negotiable':`${p.stock} in stock`}</em></div>
           <div className="inventory-card-actions"><div className="inventory-primary-actions"><button className="inventory-edit" onClick={()=>openForm(p.id)}><Pencil size={14}/> Edit</button><button className="inventory-duplicate" onClick={()=>duplicateSellerProduct(p.id)}><Copy size={14}/> Duplicate</button></div><button className="inventory-delete" onClick={()=>deleteSellerProduct(p.id)}><Trash2 size={14}/> Remove</button></div>
         </article>)}
-        {products.length<30&&<button className="add-product-card" onClick={()=>openForm()}><PackagePlus size={26}/><strong>Add product</strong><span>{30-products.length} slots left on Free</span></button>}
+        {(limit===null||products.length<limit)&&<button className="add-product-card" onClick={()=>openForm()}><PackagePlus size={26}/><strong>Add product</strong><span>{limit===null?'Unlimited product slots':`${limit-products.length} slots left on ${plan}`}</span></button>}
       </div> : <button className="add-product-card empty-add-product" onClick={()=>openForm()}><PackagePlus size={30}/><strong>Add your first product</strong><span>30 product slots available on Free</span></button>}
     </section>
   </DashboardShell>
@@ -359,9 +378,11 @@ export function DashboardStorePage(){
 
 export function DashboardSettingsPage(){
   const {products}=useStoreSnapshot()
+  const {plan,limit}=useAccountPlan()
+  const planLabel=plan.charAt(0).toUpperCase()+plan.slice(1)
   return <DashboardShell title="Settings" subtitle="Account, plan and business preferences.">
     <div className="settings-stack">
-      <section className="dash-card premium-card settings-row"><div><h2>Current plan</h2><p>Free · {products.length} of 30 products active · unlimited orders</p></div><span className="current-plan-pill">Free</span></section>
+      <section className="dash-card premium-card settings-row"><div><h2>Current plan</h2><p>{planLabel} · {limit?`${products.length} of ${limit} products active`:`${products.length} products active · unlimited products`} · unlimited orders</p></div><span className="current-plan-pill">{planLabel}</span></section>
       <section className="dash-card premium-card dashboard-pricing-wrap"><div className="dash-card-head"><div><h2>Plans & billing</h2><p>Upgrade when you need more products, maps or AI tools.</p></div></div><PricingSection compact/></section>
       <section className="dash-card premium-card settings-row"><div><h2>Login & security</h2><p>Authentication setup will connect here.</p></div><button className="soft-button">Manage</button></section>
       <section className="dash-card premium-card settings-row"><div><h2>Notifications</h2><p>Order alerts and business updates.</p></div><button className="soft-button">Configure</button></section>
