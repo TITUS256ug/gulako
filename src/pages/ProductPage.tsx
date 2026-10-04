@@ -28,7 +28,7 @@ export function ProductPage({ id }: { id: string }) {
         <span className="category-chip inline-chip">{product.category}</span>
         <p className="product-shop-link"><a href={'/shop/'+profile.slug}>{profile.businessName||product.shopName}</a></p>
         <h1>{product.name}</h1>
-        <p className="detail-price">UGX {formatted}</p>
+        <div className="detail-price-row"><p className="detail-price">UGX {formatted}</p>{product.negotiable&&<span className="negotiable-detail-badge">Slightly negotiable</span>}</div>
         {product.description&&<p className="detail-description">{product.description}</p>}
         <div className="detail-benefits"><span><Check size={18}/> {product.stock} in stock</span><span><ShieldCheck size={18}/> Seller contact available</span></div>
         <div className="product-cta-stack">
