@@ -92,3 +92,16 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
   .inventory-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px}.inventory-card>img{height:120px}.inventory-body{padding:10px}.inventory-body strong{font-size:11px}.add-product-card{min-height:220px}
   .dashboard-pricing-wrap .pricing-grid{grid-template-columns:1fr}.dashboard-pricing-wrap{padding:14px}.shop-logo-uploader{align-items:flex-start}
 }
+
+
+/* Production empty states and demo-free launch surfaces */
+.clean-showcase{display:grid;place-items:center}
+.brand-showcase-card{position:relative;z-index:2;width:min(460px,84%);padding:38px;border-radius:30px;background:rgba(255,255,255,.92);border:1px solid rgba(124,58,237,.12);box-shadow:0 32px 80px rgba(77,43,132,.18);display:grid;gap:14px}
+.brand-showcase-mark{width:66px;height:66px;border-radius:21px;display:grid;place-items:center;background:linear-gradient(145deg,#6d28d9,#a855f7);color:#fff;font:800 43px 'Manrope'}
+.brand-showcase-card>span{color:var(--muted);font-weight:700}.brand-showcase-card>strong{font:800 30px/1.12 'Manrope';letter-spacing:-1px;max-width:330px}.brand-showcase-card>a{display:inline-flex;align-items:center;gap:8px;width:max-content;color:var(--purple-2);font-weight:900;margin-top:7px}
+.shop-empty-page{min-height:64vh;display:grid;place-items:center;align-content:center;text-align:center;padding:70px 20px}
+.shop-empty-page h1{font:800 clamp(38px,5vw,66px)/1 'Manrope';letter-spacing:-2.7px;margin:14px 0 12px;max-width:800px}.shop-empty-page p{color:var(--muted);max-width:600px;margin:0 auto 24px;line-height:1.7}
+.shop-empty-icon{width:72px;height:72px;border-radius:23px;display:grid;place-items:center;background:var(--purple-soft);color:var(--purple-2);margin-bottom:18px}
+.marketplace-empty,.product-empty{min-height:390px;margin:30px 0 70px}
+.clean-auth-card{display:grid;gap:14px;align-content:center;text-align:left;padding:38px}.clean-auth-card strong{font:800 32px/1.12 'Manrope';letter-spacing:-1px;max-width:360px}.clean-auth-card>span{color:rgba(255,255,255,.78)}
+@media(max-width:620px){.brand-showcase-card{padding:26px}.brand-showcase-card>strong{font-size:24px}.shop-empty-page{min-height:58vh;padding:50px 8px}.shop-empty-page h1{font-size:39px;letter-spacing:-2px}}
