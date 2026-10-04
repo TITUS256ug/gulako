@@ -1,11 +1,11 @@
-import { ArrowUpRight, BarChart3, Check, CheckCircle2, Copy, Eye, ImagePlus, Link2, MessageCircle, MoreHorizontal, PackagePlus, Plus, Search, Settings2, ShoppingBag, Sparkles, Trash2, TrendingUp, Users, X } from 'lucide-react'
+import { ArrowUpRight, BarChart3, Check, CheckCircle2, Copy, Eye, ImagePlus, Link2, MessageCircle, MoreHorizontal, PackagePlus, Pencil, Plus, Search, Settings2, ShoppingBag, Sparkles, Trash2, TrendingUp, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { DashboardShell } from '../components/DashboardShell'
 import { PricingSection } from '../components/PricingSection'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
 import { fileToDataUrl, getShopLogo } from '../lib/shopBrand'
-import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, saveStoreProfile, slugifyStoreName, validateStoreSlug } from '../lib/storeData'
+import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, saveStoreProfile, slugifyStoreName, updateSellerProduct, validateStoreSlug } from '../lib/storeData'
 import type { AccentName, StoreProfile } from '../lib/storeData'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
@@ -112,12 +112,27 @@ export function DashboardHomePage(){
 export function DashboardProductsPage(){
   const {profile,products}=useStoreSnapshot()
   const [showForm,setShowForm]=useState(()=>new URLSearchParams(window.location.search).get('add')==='1')
+  const [editingId,setEditingId]=useState<string|null>(null)
   const [image,setImage]=useState('')
   const [error,setError]=useState('')
   const inputRef=useRef<HTMLInputElement>(null)
+  const editingProduct=editingId ? products.find(product=>product.id===editingId) : undefined
 
-  const openForm=()=>{setShowForm(true);setError('');window.history.replaceState({},'', '/dashboard/products?add=1')}
-  const closeForm=()=>{setShowForm(false);setImage('');setError('');window.history.replaceState({},'', '/dashboard/products')}
+  const openForm=(productId?:string)=>{
+    const product=productId ? products.find(item=>item.id===productId) : undefined
+    setEditingId(product?.id ?? null)
+    setImage(product?.image ?? '')
+    setShowForm(true)
+    setError('')
+    window.history.replaceState({},'', product ? '/dashboard/products?edit='+product.id : '/dashboard/products?add=1')
+  }
+  const closeForm=()=>{
+    setShowForm(false)
+    setEditingId(null)
+    setImage('')
+    setError('')
+    window.history.replaceState({},'', '/dashboard/products')
+  }
 
   const pickImage=async(file?:File)=>{
     if(!file)return
@@ -139,7 +154,7 @@ export function DashboardProductsPage(){
     const negotiable=form.get('negotiable')==='on'
     if(!name || !category || price<=0){setError('Add a product name, category and valid price.');return}
 
-    addSellerProduct({
+    const payload={
       shopSlug:profile.slug,
       shopName:profile.businessName || 'Your shop',
       name,
@@ -150,14 +165,16 @@ export function DashboardProductsPage(){
       description,
       stock:Math.max(0,stock),
       negotiable,
-    })
+    }
+    if(editingId) updateSellerProduct(editingId,payload)
+    else addSellerProduct(payload)
     closeForm()
   }
 
-  return <DashboardShell title="Products" subtitle="Manage what customers see in your shop." action={<button className="primary-button" onClick={openForm}><Plus size={17}/>Add product</button>}>
+  return <DashboardShell title="Products" subtitle="Manage what customers see in your shop." action={<button className="primary-button" onClick={()=>openForm()}><Plus size={17}/>Add product</button>}>
     {showForm && <section className="dash-card premium-card product-editor-card">
-      <div className="dash-card-head"><div><span className="section-kicker">New product</span><h2>Add a product</h2><p>Products you save appear in your storefront preview.</p></div><button className="icon-button" onClick={closeForm} aria-label="Close"><X size={18}/></button></div>
-      <form className="product-editor-form" onSubmit={submit}>
+      <div className="dash-card-head"><div><span className="section-kicker">{editingId?'Edit product':'New product'}</span><h2>{editingId?'Edit product':'Add a product'}</h2><p>{editingId?'Update this product and save your changes.':'Products you save appear in your storefront preview.'}</p></div><button className="icon-button" onClick={closeForm} aria-label="Close"><X size={18}/></button></div>
+      <form key={editingId ?? 'new-product'} className="product-editor-form" onSubmit={submit}>
         <div className="product-image-editor">
           <button type="button" className="product-image-drop" onClick={()=>inputRef.current?.click()}>
             {image?<img src={image} alt="Product preview"/>:<><ImagePlus size={28}/><strong>Add product image</strong><span>PNG, JPG or WEBP</span></>}
@@ -165,15 +182,15 @@ export function DashboardProductsPage(){
           <input ref={inputRef} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={(e:ChangeEvent<HTMLInputElement>)=>pickImage(e.target.files?.[0])}/>
         </div>
         <div className="form-grid product-form-grid">
-          <label className="wide"><span>Product name</span><input name="name" required placeholder="e.g. Classic leather bag"/></label>
-          <label><span>Category</span><input name="category" required placeholder="e.g. Fashion"/></label>
-          <label><span>Price (UGX)</span><input name="price" required type="number" min="1" placeholder="85000"/></label>
-          <label className="negotiable-option"><span>Price option</span><span className="check-row negotiable-check"><input name="negotiable" type="checkbox"/> Slightly negotiable</span></label>
-          <label><span>Stock</span><input name="stock" type="number" min="0" defaultValue="1"/></label>
-          <label className="wide"><span>Description</span><textarea name="description" placeholder="Tell customers about this product"/></label>
+          <label className="wide"><span>Product name</span><input name="name" required defaultValue={editingProduct?.name ?? ''} placeholder="e.g. Classic leather bag"/></label>
+          <label><span>Category</span><input name="category" required defaultValue={editingProduct?.category ?? ''} placeholder="e.g. Fashion"/></label>
+          <label><span>Price (UGX)</span><input name="price" required type="number" min="1" defaultValue={editingProduct?.price ?? ''} placeholder="85000"/></label>
+          <label className="negotiable-option"><span>Price option</span><span className="check-row negotiable-check"><input name="negotiable" type="checkbox" defaultChecked={Boolean(editingProduct?.negotiable)}/> Slightly negotiable</span></label>
+          <label><span>Stock</span><input name="stock" type="number" min="0" defaultValue={editingProduct?.stock ?? 1}/></label>
+          <label className="wide"><span>Description</span><textarea name="description" defaultValue={editingProduct?.description ?? ''} placeholder="Tell customers about this product"/></label>
         </div>
         {error&&<p className="form-error">{error}</p>}
-        <div className="editor-actions"><button type="button" className="soft-button" onClick={closeForm}>Cancel</button><button className="primary-button" type="submit"><CheckCircle2 size={17}/>Save product</button></div>
+        <div className="editor-actions"><button type="button" className="soft-button" onClick={closeForm}>Cancel</button><button className="primary-button" type="submit"><CheckCircle2 size={17}/>{editingId?'Save changes':'Save product'}</button></div>
       </form>
     </section>}
 
@@ -183,9 +200,9 @@ export function DashboardProductsPage(){
         {products.map(p=><article className="inventory-card" key={p.id}>
           <div className="inventory-image">{p.image?<img src={p.image} alt={p.name}/>:<PackagePlus size={28}/>}</div>
           <div className="inventory-body"><div><small>{p.category}</small><strong>{p.name}</strong></div><button aria-label="Product options"><MoreHorizontal size={18}/></button><span>UGX {money(p.price)}</span><em>{p.negotiable?'Slightly negotiable':`${p.stock} in stock`}</em></div>
-          <div className="inventory-card-actions"><button className="inventory-duplicate" onClick={()=>duplicateSellerProduct(p.id)}><Copy size={14}/> Duplicate</button><button className="inventory-delete" onClick={()=>deleteSellerProduct(p.id)}><Trash2 size={14}/> Remove</button></div>
+          <div className="inventory-card-actions"><div className="inventory-primary-actions"><button className="inventory-edit" onClick={()=>openForm(p.id)}><Pencil size={14}/> Edit</button><button className="inventory-duplicate" onClick={()=>duplicateSellerProduct(p.id)}><Copy size={14}/> Duplicate</button></div><button className="inventory-delete" onClick={()=>deleteSellerProduct(p.id)}><Trash2 size={14}/> Remove</button></div>
         </article>)}
-        {products.length<30&&<button className="add-product-card" onClick={openForm}><PackagePlus size={26}/><strong>Add product</strong><span>{30-products.length} slots left on Free</span></button>}
+        {products.length<30&&<button className="add-product-card" onClick={()=>openForm()}><PackagePlus size={26}/><strong>Add product</strong><span>{30-products.length} slots left on Free</span></button>}
       </div> : <button className="add-product-card empty-add-product" onClick={openForm}><PackagePlus size={30}/><strong>Add your first product</strong><span>30 product slots available on Free</span></button>}
     </section>
   </DashboardShell>

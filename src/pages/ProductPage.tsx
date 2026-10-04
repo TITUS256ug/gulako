@@ -1,20 +1,22 @@
 import { ArrowLeft, Check, MessageCircle, PackageSearch, ShieldCheck, ShoppingBag } from 'lucide-react'
+import type { CSSProperties } from 'react'
 import { Header } from '../components/Header'
 import { addToCart } from '../lib/cart'
-import { getSellerProducts, getStoreProfile } from '../lib/storeData'
+import { accentColors, getSellerProducts, getStoreProfile } from '../lib/storeData'
 
 export function ProductPage({ id }: { id: string }) {
   const product=getSellerProducts().find(item=>item.id===id)
   const profile=getStoreProfile()
 
   if(!product){
-    return <div className="app-shell"><Header/><main className="page-container product-page">
+    return <div className="app-shell customer-storefront" style={style}><Header/><main className="page-container product-page">
       <a className="back-link" href={profile.businessName?'/'+profile.slug:'/'}><ArrowLeft size={17}/> Back</a>
       <section className="empty-state product-empty"><PackageSearch size={30}/><h2>Product unavailable</h2><p>This product is not currently published.</p></section>
     </main></div>
   }
 
   const formatted=new Intl.NumberFormat('en-UG').format(product.price)
+  const style={ '--shop-accent': accentColors[profile.accent] } as CSSProperties
   const whatsapp=profile.whatsapp.replace(/\D/g,'')
   const message=encodeURIComponent('Hello '+(profile.businessName||'seller')+', I am interested in '+product.name+'.')
   const add=()=>{addToCart(product.id);window.dispatchEvent(new Event('gulako-cart'))}

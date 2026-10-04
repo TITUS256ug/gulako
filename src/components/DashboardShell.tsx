@@ -44,11 +44,11 @@ export function DashboardShell({ children, title, subtitle, action }: { children
           {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">G</span>}
           <div><strong>{shopName}</strong><small>Free plan · 30 products</small></div>
         </div>
-        <a className="sidebar-view-shop" href={previewHref}><Eye size={17}/><span>View shop</span></a>
         <nav>
           {links.map(({ href, label, icon: Icon }) => (
             <a key={href} href={href} className={(path === href) ? 'active' : ''}><Icon size={18} /> <span>{label}</span></a>
           ))}
+          <a className="sidebar-view-shop" href={previewHref} target="_blank" rel="noreferrer"><Eye size={18}/><span>View shop</span></a>
         </nav>
         <div className="sidebar-bottom">
           <a href="/signin"><LogOut size={18} /> <span>Sign out</span></a>

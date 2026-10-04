@@ -148,6 +148,13 @@ export function addSellerProduct(product: Omit<Product, 'id'>) {
   return id
 }
 
+export function updateSellerProduct(id: string, updates: Partial<Omit<Product, 'id'>>) {
+  const products = getSellerProducts().map(product =>
+    product.id === id ? { ...product, ...updates, id: product.id } : product
+  )
+  saveSellerProducts(products)
+}
+
 export function duplicateSellerProduct(id: string) {
   const products = getSellerProducts()
   const source = products.find(product => product.id === id)

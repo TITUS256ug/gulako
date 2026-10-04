@@ -76,7 +76,7 @@ export function ShopPage({ slug }: { slug?: string }) {
   const instagramUrl=profile.instagram?'https://instagram.com/'+profile.instagram.replace(/^@/,''):''
   const style={ '--shop-accent': accent } as CSSProperties
 
-  return <div className="app-shell" style={style}>
+  return <div className="app-shell customer-storefront" style={style}>
     <Header compact onSearch={setQuery}/>
     <main>
       <div className="page-container">
