@@ -15,7 +15,7 @@ export function ShopPage({ slug }: { slug?: string }) {
           <p>Seller storefronts will display here once connected to the live Gulako database.</p>
           <div className="home-actions">
             <a className="primary-button" href="/signup">Create your shop <ArrowRight size={17}/></a>
-            <a className="soft-button" href="/explore">Explore Gulako</a>
+            <a className="soft-button" href="/">Back to Gulako</a>
           </div>
         </section>
       </div>
