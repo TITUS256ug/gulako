@@ -4,8 +4,8 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { DashboardShell } from '../components/DashboardShell'
 import { PricingSection } from '../components/PricingSection'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
-import { fileToDataUrl, getShopLogo } from '../lib/shopBrand'
-import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, saveStoreProfile, slugifyStoreName, updateSellerProduct, validateStoreSlug } from '../lib/storeData'
+import { getShopLogo } from '../lib/shopBrand'
+import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, hydrateSellerData, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
 import type { AccentName, StoreProfile } from '../lib/storeData'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
@@ -17,6 +17,7 @@ function useStoreSnapshot(){
   const [views,setViews]=useState(()=>getStoreViews())
 
   useEffect(()=>{
+    void hydrateSellerData()
     const refresh=()=>{
       setProfile(getStoreProfile())
       setProducts(getSellerProducts())
@@ -138,8 +139,12 @@ export function DashboardProductsPage(){
     if(!file)return
     if(!file.type.startsWith('image/')){setError('Choose a PNG, JPG or WEBP image.');return}
     if(file.size>1_500_000){setError('Product image must be smaller than 1.5 MB.');return}
-    setImage(await fileToDataUrl(file))
-    setError('')
+    try{
+      setImage(await uploadSellerAsset(file,'product'))
+      setError('')
+    }catch(err){
+      setError(err instanceof Error?err.message:'Could not upload product image.')
+    }
   }
 
   const submit=(e:FormEvent<HTMLFormElement>)=>{
@@ -239,6 +244,7 @@ export function DashboardStorePage(){
   const [profile,setProfile]=useState(()=>getStoreProfile())
   const [saved,setSaved]=useState(false)
   const [coverError,setCoverError]=useState('')
+  const [storeError,setStoreError]=useState('')
   const [slugMessage,setSlugMessage]=useState(()=>validateStoreSlug(getStoreProfile().slug,getStoreProfile().slug))
   const coverInput=useRef<HTMLInputElement>(null)
 
@@ -255,21 +261,26 @@ export function DashboardStorePage(){
     setSaved(false)
   }
 
-  const persist=(next=profile)=>{
-    const checked=validateStoreSlug(next.slug,getStoreProfile().slug)
+  const persist=async(next=profile)=>{
+    setStoreError('')
+    const checked=await checkStoreSlugAvailability(next.slug,getStoreProfile().slug)
     setSlugMessage(checked)
     if(!checked.valid)return
     const cleaned={...next,slug:checked.slug}
     setProfile(cleaned)
-    saveStoreProfile(cleaned)
-    setSaved(true)
-    window.setTimeout(()=>setSaved(false),2400)
+    try{
+      await saveStoreProfile(cleaned)
+      setSaved(true)
+      window.setTimeout(()=>setSaved(false),2400)
+    }catch(err){
+      setStoreError(err instanceof Error?err.message:'Could not save your store.')
+    }
   }
 
   const chooseAccent=(accent:AccentName)=>{
     const next={...profile,accent}
     setProfile(next)
-    saveStoreProfile(next)
+    void saveStoreProfile(next)
     setSaved(true)
     window.setTimeout(()=>setSaved(false),1600)
   }
@@ -278,12 +289,16 @@ export function DashboardStorePage(){
     if(!file)return
     if(!file.type.startsWith('image/')){setCoverError('Choose a PNG, JPG or WEBP image.');return}
     if(file.size>1_500_000){setCoverError('Cover image must be smaller than 1.5 MB.');return}
-    const cover=await fileToDataUrl(file)
-    const next={...profile,cover}
-    setProfile(next)
-    saveStoreProfile(next)
-    setCoverError('')
-    setSaved(true)
+    try{
+      const cover=await uploadSellerAsset(file,'cover')
+      const next={...profile,cover}
+      setProfile(next)
+      await saveStoreProfile(next)
+      setCoverError('')
+      setSaved(true)
+    }catch(err){
+      setCoverError(err instanceof Error?err.message:'Could not upload cover image.')
+    }
   }
 
   const previewHref=profile.businessName&&slugMessage.valid?`/${profile.slug}`:'/dashboard/store'
@@ -305,7 +320,7 @@ export function DashboardStorePage(){
           <label><span>Instagram</span><input value={profile.instagram} onChange={e=>update('instagram',e.target.value)} placeholder="@yourbusiness"/></label>
           <label className="wide"><span>Delivery information</span><textarea value={profile.deliveryInfo} onChange={e=>update('deliveryInfo',e.target.value)} placeholder="Delivery areas, fees and pickup information"/></label>
         </div>
-        <button className="primary-button" onClick={()=>persist()} disabled={!slugMessage.valid}><CheckCircle2 size={17}/> Save changes</button>
+        {storeError&&<p className="form-error">{storeError}</p>}<button className="primary-button" onClick={()=>void persist()} disabled={!slugMessage.valid}><CheckCircle2 size={17}/> Save changes</button>
       </section>
 
       <aside className="dash-card premium-card brand-panel">
@@ -326,7 +341,7 @@ export function DashboardStorePage(){
           {profile.cover?<img src={profile.cover} alt="Shop cover preview"/>:<><Plus size={22}/><span>Add cover image</span></>}
         </button>
         <input ref={coverInput} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={(e:ChangeEvent<HTMLInputElement>)=>pickCover(e.target.files?.[0])}/>
-        {profile.cover&&<button className="text-danger-button" onClick={()=>{const next={...profile,cover:''};setProfile(next);saveStoreProfile(next)}}>Remove cover</button>}
+        {profile.cover&&<button className="text-danger-button" onClick={()=>{const next={...profile,cover:''};setProfile(next);void saveStoreProfile(next)}}>Remove cover</button>}
         {coverError&&<p className="form-error">{coverError}</p>}
         <div className="brand-tip"><Sparkles size={17}/><div><strong>Tip</strong><span>Use a wide, clean image that represents your business.</span></div></div>
       </aside>
