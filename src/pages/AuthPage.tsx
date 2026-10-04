@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, LockKeyhole, Mail, Music2, Smartphone } from 'lucide-react'
+import { ArrowRight, Eye, LockKeyhole, Mail, Music2 } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Logo } from '../components/Logo'
@@ -7,26 +7,42 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
   const [showPassword, setShowPassword] = useState(false)
   const isSignup = mode === 'signup'
   const continueDemo = () => { window.location.href = isSignup ? '/onboarding' : '/dashboard' }
+
   return <div className="auth-page">
     <section className="auth-panel">
       <Logo />
-      <div className="auth-copy"><span className="section-kicker">{isSignup ? 'Open your shop' : 'Welcome back'}</span><h1>{isSignup ? 'Start selling on Gulako.' : 'Sign in to Gulako.'}</h1><p>{isSignup ? 'Create a beautiful storefront in minutes.' : 'Manage your shop, orders and customers.'}</p></div>
-      <div className="social-auth-grid">
-        <button className="social-auth google" onClick={continueDemo}><span className="social-letter">G</span> Continue with Google (Gmail)</button>
-        <button className="social-auth tiktok" onClick={continueDemo}><Music2 size={19}/> Continue with TikTok</button>
-        <button className="social-auth phone" onClick={continueDemo}><Smartphone size={19}/> Continue with phone</button>
+      <div className="auth-copy">
+        <span className="section-kicker">{isSignup ? 'Open your shop' : 'Welcome back'}</span>
+        <h1>{isSignup ? 'Start selling on Gulako.' : 'Sign in to Gulako.'}</h1>
+        <p>{isSignup ? 'Create your storefront and start selling.' : 'Manage your shop, orders and customers.'}</p>
       </div>
-      <div className="auth-divider"><span>or use email</span></div>
+
       <form className="auth-form" onSubmit={(e: FormEvent)=>{e.preventDefault();continueDemo()}}>
-        {isSignup && <label><span>Your name</span><div className="input-shell"><input required placeholder="e.g. Titus" /></div></label>}
+        {isSignup && <label><span>Your name</span><div className="input-shell"><input required placeholder="Your name" /></div></label>}
         <label><span>Email</span><div className="input-shell"><Mail size={18}/><input type="email" required placeholder="you@example.com" /></div></label>
-        <label><span>Password</span><div className="input-shell"><LockKeyhole size={18}/><input type={showPassword?'text':'password'} required placeholder="••••••••"/><button type="button" onClick={()=>setShowPassword(v=>!v)}><Eye size={17}/></button></div></label>
+        <label><span>Password</span><div className="input-shell"><LockKeyhole size={18}/><input type={showPassword?'text':'password'} required placeholder="••••••••"/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?'Hide password':'Show password'}><Eye size={17}/></button></div></label>
         {!isSignup && <div className="auth-options"><label className="check-row"><input type="checkbox"/> Remember me</label><a href="#">Forgot password?</a></div>}
         <button className="primary-button large full-width" type="submit">{isSignup ? 'Create account' : 'Sign in'} <ArrowRight size={18}/></button>
       </form>
-      <p className="auth-switch">{isSignup ? 'Already have an account?' : 'New to Gulako?'} <a href={isSignup?'/signin':'/signup'}>{isSignup?'Sign in':'Create free account'}</a></p>
+
+      <div className="auth-divider"><span>or continue with</span></div>
+
+      <div className="social-auth-grid">
+        <button className="social-auth google" onClick={continueDemo}><span className="social-letter">G</span> Continue with Google</button>
+        <button className="social-auth tiktok" onClick={continueDemo}><Music2 size={19}/> Continue with TikTok</button>
+      </div>
+
+      <p className="auth-switch">{isSignup ? 'Already have an account?' : 'New to Gulako?'} <a href={isSignup?'/signin':'/signup'}>{isSignup?'Sign in':'Create account'}</a></p>
       <small className="auth-legal">By continuing, you agree to Gulako's terms and privacy policy.</small>
     </section>
-    <aside className="auth-visual"><div className="auth-gradient"/><div className="auth-showcase-card clean-auth-card"><div className="brand-showcase-mark">g</div><strong>Run your shop from one place.</strong><span>Products · Orders · Customers</span></div></aside>
+
+    <aside className="auth-visual">
+      <div className="auth-gradient"/>
+      <div className="auth-showcase-card clean-auth-card">
+        <div className="brand-showcase-mark">g</div>
+        <strong>Run your shop from one place.</strong>
+        <span>Products · Orders · Customers</span>
+      </div>
+    </aside>
   </div>
 }
