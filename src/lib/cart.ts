@@ -1,6 +1,7 @@
+import type { Product } from '../data/mock'
 import { getSellerProducts } from './storeData'
 
-export type CartLine = { productId: string; quantity: number }
+export type CartLine = { productId: string; quantity: number; product?: Product }
 const KEY = 'gulako_cart'
 
 export function getCart(): CartLine[] {
@@ -17,11 +18,16 @@ export function saveCart(lines: CartLine[]) {
   window.dispatchEvent(new Event('gulako-cart'))
 }
 
-export function addToCart(productId: string) {
+export function addToCart(product: string | Product) {
+  const productId=typeof product==='string'?product:product.id
   const lines = getCart()
   const existing = lines.find((line) => line.productId === productId)
-  if (existing) existing.quantity += 1
-  else lines.push({ productId, quantity: 1 })
+  if (existing) {
+    existing.quantity += 1
+    if(typeof product!=='string') existing.product=product
+  } else {
+    lines.push({ productId, quantity: 1, product:typeof product==='string'?undefined:product })
+  }
   saveCart(lines)
 }
 
@@ -34,11 +40,12 @@ export function updateCart(productId: string, quantity: number) {
 
 export function clearCart() { saveCart([]) }
 export function cartCount() { return getCart().reduce((sum, line) => sum + line.quantity, 0) }
+
 export function cartDetails() {
-  const products=getSellerProducts()
+  const sellerProducts=getSellerProducts()
   return getCart()
     .map((line) => {
-      const product=products.find((item) => item.id === line.productId)
+      const product=line.product??sellerProducts.find((item) => item.id === line.productId)
       return product ? { ...line, product } : null
     })
     .filter((line): line is NonNullable<typeof line> => Boolean(line))
