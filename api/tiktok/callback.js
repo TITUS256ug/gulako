@@ -19,10 +19,10 @@ export default async function handler(req,res){
     return
   }
 
-  const clientKey=process.env.TIKTOK_CLIENT_KEY
-  const clientSecret=process.env.TIKTOK_CLIENT_SECRET
-  const supabaseUrl=process.env.VITE_API_URL||process.env.VITE_SUPABASE_URL
-  const serviceRole=process.env.SUPABASE_SERVICE_ROLE_KEY
+  const clientKey=(process.env.TIKTOK_CLIENT_KEY||'').trim()
+  const clientSecret=(process.env.TIKTOK_CLIENT_SECRET||'').trim()
+  const supabaseUrl=(process.env.VITE_API_URL||process.env.VITE_SUPABASE_URL||'').trim()
+  const serviceRole=(process.env.SUPABASE_SERVICE_ROLE_KEY||'').trim()
 
   if(!clientKey||!clientSecret||!supabaseUrl||!serviceRole){
     fail(res,'setup')
