@@ -4,6 +4,7 @@ import type { FormEvent } from 'react'
 import { InstallAppButton } from '../components/InstallAppButton'
 import { Logo } from '../components/Logo'
 import { backend, backendConfigured } from '../lib/backend'
+import { clearSellerLocalData } from '../lib/storeData'
 
 export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
   const [showPassword, setShowPassword] = useState(false)
@@ -32,14 +33,18 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
         },
       })
       if(error){setError(error.message);setBusy(false);return}
-      if(data.session) window.location.replace('/dashboard')
+      if(data.session){
+        clearSellerLocalData(data.user?.id)
+        window.location.replace('/dashboard')
+      }
       else {
         setPendingEmail(email)
         setMessage('Verification email sent. Open it to activate your account.')
       }
     }else{
-      const {error}=await backend.auth.signInWithPassword({email,password})
+      const {data,error}=await backend.auth.signInWithPassword({email,password})
       if(error){setError(error.message);setBusy(false);return}
+      clearSellerLocalData(data.user?.id)
       const next=new URLSearchParams(window.location.search).get('next')
       window.location.replace(next||'/dashboard')
     }

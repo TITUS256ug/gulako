@@ -114,7 +114,7 @@ export function DashboardHomePage(){
     <section className="metric-grid premium-metrics">
       <article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>0</strong><em>No data yet</em></div></article>
       <article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Sales</small><strong>UGX 0</strong><em>No data yet</em></div></article>
-      <article><span className="metric-icon"><Eye size={20}/></span><div><small>Shop views</small><strong>{views}</strong><em>Starts at 40</em></div></article>
+      <article><span className="metric-icon"><Eye size={20}/></span><div><small>Shop views</small><strong>{views}</strong><em>Total storefront visits</em></div></article>
       <article><span className="metric-icon"><Users size={20}/></span><div><small>Customers</small><strong>0</strong><em>No data yet</em></div></article>
     </section>
 
@@ -252,16 +252,16 @@ export function DashboardCustomersPage(){
 
 export function DashboardAnalyticsPage(){
   const {views}=useStoreSnapshot()
-  const added=Math.max(0,views-40)
   return <DashboardShell title="Analytics" subtitle="Understand what’s working.">
-    <section className="metric-grid premium-metrics"><article><span className="metric-icon"><BarChart3 size={20}/></span><div><small>Conversion</small><strong>0%</strong><em>Orders not connected yet</em></div></article><article><span className="metric-icon"><Eye size={20}/></span><div><small>Store views</small><strong>{views}</strong><em>+{added} since baseline</em></div></article><article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>0</strong><em>No orders yet</em></div></article><article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Revenue</small><strong>UGX 0</strong><em>No sales yet</em></div></article></section>
-    <section className="dash-card premium-card analytics-card"><div className="dash-card-head"><div><h2>Store visits</h2><p>Your counter begins at 40 and increases as new sessions visit your storefront.</p></div><span className="analytics-total">{views}</span></div><div className="analytics-view-visual"><div className="analytics-view-orb"><Eye size={28}/><strong>{views}</strong><span>Total storefront views</span></div><div className="analytics-view-copy"><strong>+{added}</strong><span>views recorded after your starting baseline</span><small>Full cross-device analytics will sync when the database is connected.</small></div></div></section>
+    <section className="metric-grid premium-metrics"><article><span className="metric-icon"><BarChart3 size={20}/></span><div><small>Conversion</small><strong>0%</strong><em>Orders not connected yet</em></div></article><article><span className="metric-icon"><Eye size={20}/></span><div><small>Store views</small><strong>{views}</strong><em>Total storefront visits</em></div></article><article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>0</strong><em>No orders yet</em></div></article><article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Revenue</small><strong>UGX 0</strong><em>No sales yet</em></div></article></section>
+    <section className="dash-card premium-card analytics-card"><div className="dash-card-head"><div><h2>Store visits</h2><p>Every storefront visit is counted, including your own previews.</p></div><span className="analytics-total">{views}</span></div><div className="analytics-view-visual"><div className="analytics-view-orb"><Eye size={28}/><strong>{views}</strong><span>Total storefront views</span></div><div className="analytics-view-copy"><strong>{views}</strong><span>total visits recorded</span><small>Views update whenever the storefront is opened or refreshed.</small></div></div></section>
   </DashboardShell>
 }
 
 export function DashboardStorePage(){
   const [profile,setProfile]=useState(()=>getStoreProfile())
   const [saved,setSaved]=useState(false)
+  const [saving,setSaving]=useState(false)
   const [coverError,setCoverError]=useState('')
   const [storeError,setStoreError]=useState('')
   const [slugMessage,setSlugMessage]=useState(()=>validateStoreSlug(getStoreProfile().slug,getStoreProfile().slug))
@@ -290,16 +290,18 @@ export function DashboardStorePage(){
 
   const persist=async(next=profile)=>{
     setStoreError('')
+    setSaving(true)
     const checked=await checkStoreSlugAvailability(next.slug,getStoreProfile().slug)
     setSlugMessage(checked)
-    if(!checked.valid)return
+    if(!checked.valid){setSaving(false);return}
     const cleaned={...next,slug:checked.slug}
     setProfile(cleaned)
     try{
       await saveStoreProfile(cleaned)
       setSaved(true)
-      window.setTimeout(()=>setSaved(false),2400)
+      window.setTimeout(()=>window.location.assign('/dashboard'),900)
     }catch(err){
+      setSaving(false)
       setStoreError(err instanceof Error?err.message:'Could not save your store.')
     }
   }
@@ -330,7 +332,7 @@ export function DashboardStorePage(){
 
   const previewHref=profile.businessName&&slugMessage.valid?`/${profile.slug}`:'/dashboard/store'
 
-  return <DashboardShell title="Store" subtitle="Customize how your business appears." action={<a className="soft-button" href={previewHref}><Eye size={17}/> Preview shop</a>}>
+  return <DashboardShell title="Store" subtitle="Customize how your business appears." action={<a className="soft-button" href={previewHref} target={profile.businessName&&slugMessage.valid?'_blank':undefined} rel={profile.businessName&&slugMessage.valid?'noreferrer':undefined}><Eye size={17}/> Preview shop</a>}>
     <div className="dashboard-two-col store-editor-layout">
       <section className="dash-card premium-card form-card">
         <div className="store-card-title"><div><h2>Store profile</h2><p>These details appear on your storefront.</p></div>{saved&&<span className="save-success"><Check size={14}/> Saved</span>}</div>
@@ -339,7 +341,7 @@ export function DashboardStorePage(){
           <label className="wide"><span>Business name</span><input value={profile.businessName} onChange={e=>update('businessName',e.target.value)} placeholder="Your business name"/></label>
           <label><span>Category</span><select value={profile.category} onChange={e=>update('category',e.target.value)}><option value="">Select category</option>{BUSINESS_CATEGORIES.map(item=><option key={item} value={item}>{item}</option>)}</select></label>
           <label><span>Location</span><input value={profile.location} onChange={e=>update('location',e.target.value)} placeholder="Town, city or area"/></label>
-          <label className="wide"><span>Shop link</span><div className="slug-input clean-shop-link"><span>gulako.site/</span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none"/></div><small className={slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugMessage.valid?<><Check size={12}/> {slugMessage.message}</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Letters and numbers only. No spaces, commas or symbols.</small></label>
+          <label className="wide premium-link-field"><span>Shop link</span><div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" spellCheck={false} placeholder="yourshop"/></div><small className={slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Choose a clean shop link using only letters and numbers.</small></label>
           <label className="wide"><span>Description</span><textarea value={profile.description} onChange={e=>update('description',e.target.value)} placeholder="Describe your business"/></label>
           <label className="wide"><span>WhatsApp</span><input value={profile.whatsapp} onChange={e=>update('whatsapp',e.target.value)} placeholder="+256..."/></label>
           <label className="wide"><span>Google Maps / Plus Code</span><input value={profile.mapsLink} onChange={e=>update('mapsLink',e.target.value)} placeholder="Paste link or code"/></label>
@@ -347,7 +349,8 @@ export function DashboardStorePage(){
           <label><span>Instagram</span><input value={profile.instagram} onChange={e=>update('instagram',e.target.value)} placeholder="@yourbusiness"/></label>
           <label className="wide"><span>Delivery information</span><textarea value={profile.deliveryInfo} onChange={e=>update('deliveryInfo',e.target.value)} placeholder="Delivery areas, fees and pickup information"/></label>
         </div>
-        {storeError&&<p className="form-error">{storeError}</p>}<button className="primary-button" onClick={()=>void persist()} disabled={!slugMessage.valid}><CheckCircle2 size={17}/> Save changes</button>
+        {storeError&&<p className="form-error">{storeError}</p>}<button className={saving?'primary-button saving':'primary-button'} onClick={()=>void persist()} disabled={saving||!slugMessage.valid}>{saving?<span className="save-spinner"/>:<CheckCircle2 size={17}/>} {saving?'Saving your store…':'Save changes'}</button>
+        {saved&&<div className="store-save-toast"><span><Check size={18}/></span><div><strong>Store saved</strong><small>Taking you back to Overview…</small></div></div>}
       </section>
 
       <aside className="dash-card premium-card brand-panel">

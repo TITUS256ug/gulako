@@ -61,6 +61,25 @@ function cacheProducts(products:Product[]){
   window.dispatchEvent(new Event('gulako-store'))
 }
 
+export function clearSellerLocalData(ownerId?:string){
+  if(typeof window==='undefined')return
+  window.localStorage.removeItem(PROFILE_KEY)
+  window.localStorage.removeItem(PRODUCTS_KEY)
+  window.localStorage.removeItem(ANALYTICS_KEY)
+  window.localStorage.removeItem(LOGO_KEY)
+  if(ownerId)window.localStorage.setItem(OWNER_KEY,ownerId)
+  else window.localStorage.removeItem(OWNER_KEY)
+  window.dispatchEvent(new Event('gulako-store'))
+  window.dispatchEvent(new Event('gulako-products'))
+  window.dispatchEvent(new Event('gulako-brand'))
+  window.dispatchEvent(new Event('gulako-analytics'))
+}
+
+function ensureCacheOwner(ownerId:string){
+  if(typeof window==='undefined')return
+  if(window.localStorage.getItem(OWNER_KEY)!==ownerId)clearSellerLocalData(ownerId)
+}
+
 export function slugifyStoreName(value:string){
   return value.toLowerCase().trim().replace(/[^a-z0-9]/g,'').slice(0,40)||'myshop'
 }
@@ -134,25 +153,33 @@ function rowToProduct(row:any,shopName:string,shopSlug:string):Product{
 
 export async function hydrateSellerData(){
   const {data:{user}}=await backend.auth.getUser()
-  if(!user)return
-  const {data:shop}=await backend.from('shops').select('*').eq('owner_id',user.id).maybeSingle()
-  if(!shop)return
+  if(!user){
+    clearSellerLocalData()
+    return
+  }
+  ensureCacheOwner(user.id)
+  const {data:shop,error}=await backend.from('shops').select('*').eq('owner_id',user.id).maybeSingle()
+  if(error)return
+  if(!shop){
+    clearSellerLocalData(user.id)
+    return
+  }
   const profile=rowToProfile(shop)
   cacheProfile(profile)
   window.localStorage.setItem(ANALYTICS_KEY,JSON.stringify({views:Number(shop.views??40)}))
-  if(shop.logo_url){
-    window.localStorage.setItem(LOGO_KEY,shop.logo_url)
-    window.dispatchEvent(new Event('gulako-brand'))
-  }
+  if(shop.logo_url)window.localStorage.setItem(LOGO_KEY,shop.logo_url)
+  else window.localStorage.removeItem(LOGO_KEY)
+  window.dispatchEvent(new Event('gulako-brand'))
   const {data:rows}=await backend.from('products').select('*').eq('shop_id',shop.id).eq('owner_id',user.id).order('created_at',{ascending:false})
   cacheProducts((rows??[]).map((row:any)=>rowToProduct(row,profile.businessName,profile.slug)))
   window.dispatchEvent(new Event('gulako-analytics'))
 }
 
 export async function saveStoreProfile(profile:StoreProfile){
-  cacheProfile(profile)
   const {data:{user}}=await backend.auth.getUser()
-  if(!user)return
+  if(!user)throw new Error('Please sign in first.')
+  ensureCacheOwner(user.id)
+  cacheProfile(profile)
   const row={
     owner_id:user.id,
     business_name:profile.businessName,
@@ -255,10 +282,8 @@ export async function uploadSellerAsset(file:File,kind:'logo'|'cover'|'product')
 
 export async function recordStoreView(slug:string){
   if(typeof window==='undefined')return 40
-  const sessionKey=ANALYTICS_SESSION_KEY+slug
-  if(window.sessionStorage.getItem(sessionKey))return getStoreViews()
-  window.sessionStorage.setItem(sessionKey,'1')
-  const {data}=await backend.rpc('increment_store_view',{shop_slug:slug})
+  const {data,error}=await backend.rpc('increment_store_view',{shop_slug:slug})
+  if(error)return getStoreViews()
   const next=Math.max(40,Number(data??40))
   window.localStorage.setItem(ANALYTICS_KEY,JSON.stringify({views:next}))
   window.dispatchEvent(new Event('gulako-analytics'))

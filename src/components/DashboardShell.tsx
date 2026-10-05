@@ -2,7 +2,7 @@ import { BarChart3, Bell, Boxes, Eye, LayoutDashboard, LogOut, Palette, Settings
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
-import { getStoreProfile, hydrateSellerData } from '../lib/storeData'
+import { clearSellerLocalData, getStoreProfile, hydrateSellerData } from '../lib/storeData'
 import { backend } from '../lib/backend'
 import { Logo } from './Logo'
 
@@ -44,7 +44,8 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   },[])
 
   const shopName = profile.businessName || 'Your shop'
-  const previewHref = profile.businessName ? `/${profile.slug}` : '/dashboard/store'
+  const hasPublishedShop = Boolean(profile.businessName && profile.slug)
+  const previewHref = hasPublishedShop ? `/${profile.slug}` : '/dashboard/store'
 
   return (
     <div className="dashboard-shell">
@@ -58,11 +59,11 @@ export function DashboardShell({ children, title, subtitle, action }: { children
           {links.map(({ href, label, icon: Icon }) => (
             <a key={href} href={href} className={(path === href) ? 'active' : ''}><Icon size={18} /> <span>{label}</span></a>
           ))}
-          <a className="sidebar-view-shop" href={previewHref} target="_blank" rel="noreferrer"><Eye size={18}/><span>View shop</span></a>
+          <a className={hasPublishedShop?'sidebar-view-shop':'sidebar-view-shop disabled'} href={previewHref} target={hasPublishedShop?'_blank':undefined} rel={hasPublishedShop?'noreferrer':undefined}><Eye size={18}/><span>{hasPublishedShop?'View shop':'Set up shop'}</span></a>
           {(role==='founder'||role==='admin')&&<a href="/founder"><Settings size={18}/><span>Founder</span></a>}
         </nav>
         <div className="sidebar-bottom">
-          <button className="sidebar-signout" onClick={async()=>{await backend.auth.signOut();window.location.replace('/signin')}}><LogOut size={18} /> <span>Sign out</span></button>
+          <button className="sidebar-signout" onClick={async()=>{clearSellerLocalData();await backend.auth.signOut();window.location.replace('/signin')}}><LogOut size={18} /> <span>Sign out</span></button>
         </div>
       </aside>
       <main className="dashboard-main">
