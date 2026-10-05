@@ -6,7 +6,7 @@ import { PricingSection } from '../components/PricingSection'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
 import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
-import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreAccent, getStoreProfile, getStoreViews, hydrateSellerData, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
+import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, applyStoreBrand, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreAccent, getStoreProfile, getStoreViews, hydrateSellerData, normalizeWhatsapp, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
 import type { AccentName, StoreProfile } from '../lib/storeData'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
@@ -336,13 +336,20 @@ export function DashboardStorePage(){
   const chooseAccent=(accent:AccentName)=>{
     const next={...profile,accent,accentColor:accentColors[accent]}
     setProfile(next)
-    setSaved(false)
+    applyStoreBrand(next)
+    setSaved(true)
+    window.setTimeout(()=>setSaved(false),1200)
   }
 
   const chooseCustomAccent=(accentColor:string)=>{
     if(!/^#[0-9a-fA-F]{6}$/.test(accentColor))return
-    setProfile(current=>({...current,accentColor}))
-    setSaved(false)
+    setProfile(current=>{
+      const next={...current,accentColor}
+      applyStoreBrand(next)
+      return next
+    })
+    setSaved(true)
+    window.setTimeout(()=>setSaved(false),1200)
   }
 
   const pickCover=async(file?:File)=>{
@@ -373,7 +380,7 @@ export function DashboardStorePage(){
           <label><span>Location</span><input value={profile.location} onChange={e=>update('location',e.target.value)} placeholder="Town, city or area"/></label>
           <label className="wide premium-link-field"><span>Shop link</span><div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="yourshop"/></div><small className={slugChecking?'slug-status checking':slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugChecking?<><span className="slug-mini-spinner"/> Checking availability…</>:slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Choose a clean shop link using only letters and numbers.</small></label>
           <label className="wide"><span>Description</span><textarea value={profile.description} onChange={e=>update('description',e.target.value)} placeholder="Describe your business"/></label>
-          <label className="wide"><span>WhatsApp</span><input value={profile.whatsapp} onChange={e=>update('whatsapp',e.target.value)} placeholder="+256..."/></label>
+          <label className="wide"><span>WhatsApp</span><input value={profile.whatsapp||'+256'} onFocus={e=>{if(!e.currentTarget.value)update('whatsapp','+256')}} onChange={e=>update('whatsapp',e.target.value)} onBlur={e=>update('whatsapp',normalizeWhatsapp(e.target.value))} inputMode="tel" autoComplete="tel" placeholder="+256 7XX XXX XXX"/><small className="field-hint">Uganda starts with +256. You can replace it with another country code.</small></label>
           <div className="wide merchant-setup">
             <div className="merchant-setup-head"><div><span className="section-kicker">Get paid directly</span><h3>Merchant payment codes</h3><p>Add either or both. Customers pay your business directly from checkout.</p></div></div>
             <div className="merchant-code-grid">
@@ -435,7 +442,7 @@ export function DashboardSettingsPage(){
   return <DashboardShell title="Settings" subtitle="Account, plan and business preferences.">
     <div className="settings-stack">
       <section className="dash-card premium-card settings-row"><div><h2>Current plan</h2><p>{planLabel} · {limit?`${products.length} of ${limit} products active`:`${products.length} products active · unlimited products`} · unlimited orders</p></div><span className="current-plan-pill">{planLabel}</span></section>
-      <section className="dash-card premium-card dashboard-pricing-wrap"><div className="dash-card-head"><div><h2>Plans & billing</h2><p>Upgrade when you need more products, maps or AI tools.</p></div></div><PricingSection compact/></section>
+      <section className="dash-card premium-card dashboard-pricing-wrap"><div className="dash-card-head"><div><h2>Plans & billing</h2><p>Upgrade with Mobile Money or bank transfer. No payment gateway required.</p></div><a className="soft-button" href="/dashboard/billing">Billing</a></div><PricingSection compact/></section>
       <section className="dash-card premium-card settings-row"><div><h2>Login & security</h2><p>Authentication setup will connect here.</p></div><button className="soft-button">Manage</button></section>
       <section className="dash-card premium-card settings-row"><div><h2>Notifications</h2><p>Order alerts and business updates.</p></div><button className="soft-button">Configure</button></section>
     </div>

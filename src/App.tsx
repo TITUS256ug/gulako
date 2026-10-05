@@ -1,6 +1,7 @@
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from './pages/AuthPage'
 import { AuthCallbackPage } from './pages/AuthCallbackPage'
+import { BillingPage } from './pages/BillingPage'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { DashboardAnalyticsPage, DashboardCustomersPage, DashboardHomePage, DashboardOrdersPage, DashboardProductsPage, DashboardSettingsPage, DashboardStorePage } from './pages/DashboardPages'
@@ -33,6 +34,7 @@ export default function App() {
   if (path === '/dashboard/customers') return <ProtectedRoute><DashboardCustomersPage /></ProtectedRoute>
   if (path === '/dashboard/analytics') return <ProtectedRoute><DashboardAnalyticsPage /></ProtectedRoute>
   if (path === '/dashboard/store') return <ProtectedRoute><DashboardStorePage /></ProtectedRoute>
+  if (path === '/dashboard/billing') return <ProtectedRoute><BillingPage /></ProtectedRoute>
   if (path === '/dashboard/settings') return <ProtectedRoute><DashboardSettingsPage /></ProtectedRoute>
   if (path === '/founder') return <ProtectedRoute><FounderPage /></ProtectedRoute>
   if (parts.length === 1) return <ShopPage slug={parts[0]} />

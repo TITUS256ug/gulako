@@ -50,7 +50,7 @@ export function DemoShopPage() {
         <div className="demo-shop-badge">Demo experience · 10 products</div>
       </section>
       <div className="demo-test-banner"><ShoppingBag size={18}/><div><strong>Try the customer experience</strong><span>Add any demo product to your cart. It will stay saved on this browser.</span></div><a href="/cart">Open cart</a></div>
-      <section className="catalog-section">
+      <section className="catalog-section demo-catalog-section">
         <div className="catalog-heading-row"><div><div className="title-with-count"><h2>Demo products</h2><span className="count-pill">10</span></div><p>Preview only — these sample products are not for sale.</p></div></div>
         <div className="product-grid demo-product-grid">
           {demoProducts.map(product=><article className="product-card" key={product.id}>

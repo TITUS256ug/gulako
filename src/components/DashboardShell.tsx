@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Boxes, Eye, LayoutDashboard, LogOut, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
+import { BarChart3, Bell, Boxes, CreditCard, Eye, LayoutDashboard, LogOut, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
@@ -13,6 +13,7 @@ const links = [
   { href: '/dashboard/customers', label: 'Customers', icon: Users },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/dashboard/store', label: 'Store', icon: Palette },
+  { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 

@@ -18,8 +18,8 @@ export function PricingSection({ compact = false }: { compact?: boolean }) {
             <div className="plan-features">
               {plan.features.map(feature => <span key={feature}><Check size={16} /> {feature}</span>)}
             </div>
-            <a className={plan.featured ? 'primary-button full-width' : 'soft-button full-width'} href="/signup">
-              {plan.name === 'Free' ? 'Start free' : `Choose ${plan.name}`}
+            <a className={plan.featured ? 'primary-button full-width' : 'soft-button full-width'} href={compact ? (plan.name==='Free'?'/dashboard/settings':'/dashboard/billing?plan='+plan.name.toLowerCase()) : '/signup'}>
+              {compact ? (plan.name==='Free'?'Current free option':'Upgrade to '+plan.name) : (plan.name === 'Free' ? 'Start free' : 'Choose '+plan.name)}
             </a>
           </article>
         ))}
