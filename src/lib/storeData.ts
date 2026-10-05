@@ -22,7 +22,7 @@ export type StoreProfile = {
 const PROFILE_KEY = 'gulako_store_profile'
 const PRODUCTS_KEY = 'gulako_seller_products'
 const ANALYTICS_KEY = 'gulako_store_analytics'
-const ANALYTICS_SESSION_KEY = 'gulako_viewed_shop_'
+const OWNER_KEY = 'gulako_cache_owner'
 const LOGO_KEY = 'gulako_shop_logo'
 
 export const BUSINESS_CATEGORIES = [
