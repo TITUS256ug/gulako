@@ -2,6 +2,14 @@ import crypto from 'node:crypto'
 
 const REDIRECT_URI='https://gulako.site/api/tiktok/callback'
 
+function makeState(secret){
+  const nonce=crypto.randomBytes(20).toString('hex')
+  const ts=String(Date.now())
+  const payload=nonce+'.'+ts
+  const sig=crypto.createHmac('sha256',secret).update(payload).digest('hex')
+  return payload+'.'+sig
+}
+
 export default async function handler(req,res){
   if(req.method!=='GET'){
     res.status(405).json({error:'Method not allowed'})
@@ -9,13 +17,13 @@ export default async function handler(req,res){
   }
 
   const clientKey=(process.env.TIKTOK_CLIENT_KEY||'').trim()
-  if(!clientKey){
+  const clientSecret=(process.env.TIKTOK_CLIENT_SECRET||'').trim()
+  if(!clientKey||!clientSecret){
     res.redirect(302,'https://gulako.site/signin?tiktok_error=setup')
     return
   }
 
-  const state=crypto.randomBytes(24).toString('hex')
-  res.setHeader('Set-Cookie',`gulako_tiktok_state=${state}; Path=/; Max-Age=600; HttpOnly; Secure; SameSite=Lax`)
+  const state=makeState(clientSecret)
 
   const url=new URL('https://www.tiktok.com/v2/auth/authorize/')
   url.searchParams.set('client_key',clientKey)
