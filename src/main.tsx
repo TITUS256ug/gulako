@@ -2,6 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './styles.css'
+import { applyTheme, getTheme } from './lib/theme'
+
+applyTheme(getTheme())
 
 const rootElement = document.getElementById('root')
 

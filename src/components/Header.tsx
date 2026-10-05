@@ -2,18 +2,17 @@ import { Menu, Moon, Search, ShoppingBag, Store, Sun, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { cartCount } from '../lib/cart'
+import { applyTheme, getTheme } from '../lib/theme'
 import { Logo } from './Logo'
 
 type HeaderProps = { onSearch?: (value: string) => void; compact?: boolean }
 
 export function Header({ onSearch, compact = false }: HeaderProps) {
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(()=>getTheme()==='dark')
   const [open, setOpen] = useState(false)
   const [count, setCount] = useState(0)
 
   useEffect(() => {
-    const saved = localStorage.getItem('gulako_theme') === 'dark'
-    setDark(saved)
     const refresh = () => setCount(cartCount())
     refresh()
     window.addEventListener('gulako-cart', refresh)
@@ -21,8 +20,7 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
   }, [])
 
   useEffect(() => {
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-    localStorage.setItem('gulako_theme', dark ? 'dark' : 'light')
+    applyTheme(dark ? 'dark' : 'light')
   }, [dark])
 
   return (

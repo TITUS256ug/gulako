@@ -1,9 +1,10 @@
-import { BarChart3, Bell, Boxes, CreditCard, Eye, LayoutDashboard, LogOut, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
+import { BarChart3, Bell, Boxes, CreditCard, Eye, LayoutDashboard, LogOut, Moon, Palette, Settings, ShoppingBag, Sun, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
 import { clearSellerLocalData, getStoreAccent, getStoreProfile, hydrateSellerData } from '../lib/storeData'
 import { backend } from '../lib/backend'
+import { applyTheme, getTheme } from '../lib/theme'
 import { Logo } from './Logo'
 
 const links = [
@@ -23,6 +24,11 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   const [profile,setProfile]=useState(()=>getStoreProfile())
   const [role,setRole]=useState('seller')
   const [plan,setPlan]=useState('free')
+  const [dark,setDark]=useState(()=>getTheme()==='dark')
+
+  useEffect(()=>{
+    applyTheme(dark?'dark':'light')
+  },[dark])
 
   useEffect(()=>{
     void hydrateSellerData()
@@ -78,7 +84,7 @@ export function DashboardShell({ children, title, subtitle, action }: { children
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           <div><p className="eyebrow">Seller workspace</p><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
-          <div className="dashboard-top-actions"><button className="icon-button" aria-label="Notifications"><Bell size={18} /></button>{action}</div>
+          <div className="dashboard-top-actions"><button className="icon-button dashboard-theme-toggle" onClick={()=>setDark(value=>!value)} aria-label={dark?'Use light mode':'Use dark mode'} title={dark?'Use light mode':'Use dark mode'}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button><button className="icon-button dashboard-notification-button" aria-label="Notifications"><Bell size={18} /></button>{action}</div>
         </header>
         {children}
       </main>

@@ -1040,3 +1040,40 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
   .billing-currency-toggle{display:grid;grid-template-columns:1fr 1fr;width:100%}
   .billing-currency-toggle button{justify-content:center;padding:0 8px}
 }
+
+
+/* Persistent dashboard theme */
+:root[data-theme='dark'] .dashboard-main{
+  background:linear-gradient(180deg,#14101d,#17121f 280px)!important;
+}
+:root[data-theme='dark'] .dashboard-sidebar{
+  background:#17121f;
+  border-color:var(--border);
+}
+:root[data-theme='dark'] .dashboard-topbar,
+:root[data-theme='dark'] .dash-card,
+:root[data-theme='dark'] .premium-card,
+:root[data-theme='dark'] .metric-grid article,
+:root[data-theme='dark'] .shop-switcher,
+:root[data-theme='dark'] .billing-plan-switch button,
+:root[data-theme='dark'] .founder-card{
+  color:var(--text);
+}
+:root[data-theme='dark'] .dashboard-welcome{
+  box-shadow:0 24px 50px rgba(0,0,0,.24);
+}
+:root[data-theme='dark'] .clean-showcase{
+  background:
+    radial-gradient(circle at 78% 16%,rgba(124,58,237,.20),transparent 23%),
+    radial-gradient(circle at 28% 74%,rgba(168,85,247,.12),transparent 30%),
+    linear-gradient(145deg,#18131f,#22182e 50%,#33204d);
+}
+:root[data-theme='dark'] .brand-showcase-card{
+  background:rgba(26,22,35,.92);
+  border-color:var(--border);
+}
+.dashboard-theme-toggle{display:grid}
+@media(max-width:620px){
+  .dashboard-top-actions .dashboard-theme-toggle{display:grid!important}
+  .dashboard-top-actions .dashboard-notification-button{display:none!important}
+}
