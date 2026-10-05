@@ -14,5 +14,9 @@ ReactDOM.createRoot(rootElement).render(
 )
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined))
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+      void registration.update()
+    }).catch(() => undefined)
+  })
 }
