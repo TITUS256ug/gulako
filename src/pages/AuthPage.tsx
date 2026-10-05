@@ -6,6 +6,14 @@ import { Logo } from '../components/Logo'
 import { backend, backendConfigured } from '../lib/backend'
 import { clearSellerLocalData } from '../lib/storeData'
 
+function authErrorMessage(message:string){
+  const value=message.toLowerCase()
+  if(value.includes('error sending confirmation email')||value.includes('confirmation email')) return 'We could not send your confirmation email right now. Please try again shortly.'
+  if(value.includes('email not confirmed')) return 'Please confirm your email before signing in.'
+  if(value.includes('invalid login credentials')) return 'Incorrect email or password.'
+  return message
+}
+
 export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
   const [showPassword, setShowPassword] = useState(false)
   const [message,setMessage]=useState('')
@@ -32,7 +40,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
           emailRedirectTo:window.location.origin+'/dashboard',
         },
       })
-      if(error){setError(error.message);setBusy(false);return}
+      if(error){setError(authErrorMessage(error.message));setBusy(false);return}
       if(data.session){
         clearSellerLocalData(data.user?.id)
         window.location.replace('/dashboard')
@@ -43,7 +51,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
       }
     }else{
       const {data,error}=await backend.auth.signInWithPassword({email,password})
-      if(error){setError(error.message);setBusy(false);return}
+      if(error){setError(authErrorMessage(error.message));setBusy(false);return}
       clearSellerLocalData(data.user?.id)
       const next=new URLSearchParams(window.location.search).get('next')
       window.location.replace(next||'/dashboard')
@@ -70,7 +78,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
       email:pendingEmail,
       options:{emailRedirectTo:window.location.origin+'/dashboard'},
     })
-    if(error)setError(error.message)
+    if(error)setError(authErrorMessage(error.message))
     else setMessage('Verification email sent again.')
   }
 
@@ -79,7 +87,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
     const email=window.prompt('Enter your email address')
     if(!email)return
     const {error}=await backend.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/signin'})
-    setMessage(error?error.message:'Password reset email sent.')
+    setMessage(error?authErrorMessage(error.message):'Password reset email sent.')
   }
 
   return <div className="auth-page">

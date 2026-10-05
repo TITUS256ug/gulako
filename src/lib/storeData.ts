@@ -199,7 +199,6 @@ export async function saveStoreProfile(profile:StoreProfile){
   const {data:{user}}=await backend.auth.getUser()
   if(!user)throw new Error('Please sign in first.')
   ensureCacheOwner(user.id)
-  cacheProfile(profile)
   const row={
     owner_id:user.id,
     business_name:profile.businessName,
@@ -225,6 +224,7 @@ export async function saveStoreProfile(profile:StoreProfile){
     window.dispatchEvent(new CustomEvent('gulako-store-error',{detail:error.message}))
     throw error
   }
+  cacheProfile(profile)
   await hydrateSellerData()
 }
 
