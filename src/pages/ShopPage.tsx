@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { ProductCard } from '../components/ProductCard'
 import type { Product } from '../data/mock'
-import { accentColors, fetchPublicShop, recordStoreView } from '../lib/storeData'
+import { fetchPublicShop, getStoreAccent, recordStoreView } from '../lib/storeData'
 import type { StoreProfile } from '../lib/storeData'
 
 type PublicShopData={
@@ -74,7 +74,7 @@ export function ShopPage({ slug }: { slug?: string }) {
   }
 
   const {profile,logo}=shop
-  const accent=accentColors[profile.accent]
+  const accent=getStoreAccent(profile)
   const whatsapp=profile.whatsapp.replace(/\D/g,'')
   const instagramUrl=profile.instagram?'https://instagram.com/'+profile.instagram.replace(/^@/,''):''
   const style={ '--shop-accent': accent } as CSSProperties

@@ -47,7 +47,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
       }
       else {
         setPendingEmail(email)
-        setMessage('Verification email sent. Open it to activate your account.')
+        setMessage('Verification email sent. If it is not in your inbox within 1 minute, check Spam or Junk.')
       }
     }else{
       const {data,error}=await backend.auth.signInWithPassword({email,password})
@@ -67,7 +67,12 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
       provider:chosen as never,
       options:{redirectTo:window.location.origin+'/auth/callback'},
     })
-    if(error)setError(provider==='tiktok'?'TikTok sign-in will activate after provider credentials are connected.':error.message)
+    if(error){
+      const message=error.message.toLowerCase()
+      if(provider==='tiktok') setError('TikTok sign-in is ready in Gulako. Connect the TikTok provider credentials in Supabase to activate it.')
+      else if(message.includes('provider')||message.includes('oauth')) setError('Google sign-in is ready in Gulako. Connect the Google provider credentials in Supabase to activate it.')
+      else setError(authErrorMessage(error.message))
+    }
   }
 
   const resend=async()=>{

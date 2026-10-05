@@ -6,7 +6,7 @@ import { PricingSection } from '../components/PricingSection'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
 import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
-import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, hydrateSellerData, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
+import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreAccent, getStoreProfile, getStoreViews, hydrateSellerData, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
 import type { AccentName, StoreProfile } from '../lib/storeData'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
@@ -278,6 +278,7 @@ export function DashboardStorePage(){
   const [coverError,setCoverError]=useState('')
   const [storeError,setStoreError]=useState('')
   const [slugMessage,setSlugMessage]=useState(()=>validateStoreSlug(getStoreProfile().slug,getStoreProfile().slug))
+  const [slugChecking,setSlugChecking]=useState(false)
   const coverInput=useRef<HTMLInputElement>(null)
 
   useEffect(()=>{
@@ -289,13 +290,30 @@ export function DashboardStorePage(){
   },[])
 
   const update=(key:keyof StoreProfile,value:string)=>{
-    setProfile(current=>{
-      const next={...current,[key]:value} as StoreProfile
-      if(key==='slug') setSlugMessage(validateStoreSlug(String(value),current.slug))
-      return next
-    })
+    setProfile(current=>({...current,[key]:value} as StoreProfile))
     setSaved(false)
   }
+
+  useEffect(()=>{
+    const savedSlug=getStoreProfile().slug
+    const local=validateStoreSlug(profile.slug,savedSlug)
+    setSlugMessage(local)
+
+    if(!local.valid || local.slug===savedSlug){
+      setSlugChecking(false)
+      return
+    }
+
+    setSlugChecking(true)
+    const timer=window.setTimeout(()=>{
+      void checkStoreSlugAvailability(profile.slug,savedSlug).then(result=>{
+        setSlugMessage(result)
+        setSlugChecking(false)
+      })
+    },350)
+
+    return()=>window.clearTimeout(timer)
+  },[profile.slug])
 
   const persist=async(next=profile)=>{
     setStoreError('')
@@ -316,11 +334,15 @@ export function DashboardStorePage(){
   }
 
   const chooseAccent=(accent:AccentName)=>{
-    const next={...profile,accent}
+    const next={...profile,accent,accentColor:accentColors[accent]}
     setProfile(next)
-    void saveStoreProfile(next)
-    setSaved(true)
-    window.setTimeout(()=>setSaved(false),1600)
+    setSaved(false)
+  }
+
+  const chooseCustomAccent=(accentColor:string)=>{
+    if(!/^#[0-9a-fA-F]{6}$/.test(accentColor))return
+    setProfile(current=>({...current,accentColor}))
+    setSaved(false)
   }
 
   const pickCover=async(file?:File)=>{
@@ -331,9 +353,8 @@ export function DashboardStorePage(){
       const cover=await uploadSellerAsset(file,'cover')
       const next={...profile,cover}
       setProfile(next)
-      await saveStoreProfile(next)
       setCoverError('')
-      setSaved(true)
+      setSaved(false)
     }catch(err){
       setCoverError(err instanceof Error?err.message:'Could not upload cover image.')
     }
@@ -350,7 +371,7 @@ export function DashboardStorePage(){
           <label className="wide"><span>Business name</span><input value={profile.businessName} onChange={e=>update('businessName',e.target.value)} placeholder="Your business name"/></label>
           <label><span>Category</span><select value={profile.category} onChange={e=>update('category',e.target.value)}><option value="">Select category</option>{BUSINESS_CATEGORIES.map(item=><option key={item} value={item}>{item}</option>)}</select></label>
           <label><span>Location</span><input value={profile.location} onChange={e=>update('location',e.target.value)} placeholder="Town, city or area"/></label>
-          <label className="wide premium-link-field"><span>Shop link</span><div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="yourshop"/></div><small className={slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Choose a clean shop link using only letters and numbers.</small></label>
+          <label className="wide premium-link-field"><span>Shop link</span><div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="yourshop"/></div><small className={slugChecking?'slug-status checking':slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugChecking?<><span className="slug-mini-spinner"/> Checking availability…</>:slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Choose a clean shop link using only letters and numbers.</small></label>
           <label className="wide"><span>Description</span><textarea value={profile.description} onChange={e=>update('description',e.target.value)} placeholder="Describe your business"/></label>
           <label className="wide"><span>WhatsApp</span><input value={profile.whatsapp} onChange={e=>update('whatsapp',e.target.value)} placeholder="+256..."/></label>
           <div className="wide merchant-setup">
@@ -374,12 +395,12 @@ export function DashboardStorePage(){
           <label><span>Instagram</span><input value={profile.instagram} onChange={e=>update('instagram',e.target.value)} placeholder="@yourbusiness"/></label>
           <label className="wide"><span>Delivery information</span><textarea value={profile.deliveryInfo} onChange={e=>update('deliveryInfo',e.target.value)} placeholder="Delivery areas, fees and pickup information"/></label>
         </div>
-        {storeError&&<p className="form-error">{storeError}</p>}<button className={saving?'primary-button saving':'primary-button'} onClick={()=>void persist()} disabled={saving||!slugMessage.valid}>{saving?<span className="save-spinner"/>:<CheckCircle2 size={17}/>} {saving?'Saving your store…':'Save changes'}</button>
+        {storeError&&<p className="form-error">{storeError}</p>}<button className={saving?'primary-button saving':'primary-button'} onClick={()=>void persist()} disabled={saving||slugChecking||!slugMessage.valid}>{saving?<span className="save-spinner"/>:<CheckCircle2 size={17}/>} {saving?'Saving your store…':'Save changes'}</button>
         {saved&&<div className="store-save-toast"><span><Check size={18}/></span><div><strong>Store saved</strong><small>Taking you back to Overview…</small></div></div>}
       </section>
 
       <aside className="dash-card premium-card brand-panel">
-        <h2>Brand style</h2><p className="muted">Choose the accent customers see on your storefront.</p>
+        <h2>Brand style</h2><p className="muted">Your chosen color personalizes your seller workspace and customer storefront.</p>
         <div className="accent-picker">
           {(Object.keys(accentColors) as AccentName[]).map(accent=><button
             key={accent}
@@ -388,8 +409,11 @@ export function DashboardStorePage(){
             onClick={()=>chooseAccent(accent)}
           />)}
         </div>
-        <div className="brand-preview-strip" style={{background:`linear-gradient(135deg,${accentColors[profile.accent]}, color-mix(in srgb, ${accentColors[profile.accent]} 32%, white))`}}>
-          <span>Store accent preview</span>
+        <div className="custom-color-row">
+          <label className="custom-color-picker"><input type="color" value={getStoreAccent(profile)} onChange={e=>chooseCustomAccent(e.target.value)}/><span><strong>Custom color</strong><small>{getStoreAccent(profile).toUpperCase()}</small></span></label>
+        </div>
+        <div className="brand-preview-strip" style={{background:`linear-gradient(135deg,${getStoreAccent(profile)}, color-mix(in srgb, ${getStoreAccent(profile)} 32%, white))`}}>
+          <span>Your business color</span>
         </div>
         <h3>Shop cover</h3>
         <button className={profile.cover?'upload-box cover-upload has-cover':'upload-box cover-upload'} onClick={()=>coverInput.current?.click()}>

@@ -1,8 +1,8 @@
 import { BarChart3, Bell, Boxes, Eye, LayoutDashboard, LogOut, Palette, Settings, ShoppingBag, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
-import { clearSellerLocalData, getStoreProfile, hydrateSellerData } from '../lib/storeData'
+import { clearSellerLocalData, getStoreAccent, getStoreProfile, hydrateSellerData } from '../lib/storeData'
 import { backend } from '../lib/backend'
 import { Logo } from './Logo'
 
@@ -46,14 +46,22 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   const shopName = profile.businessName || 'Your shop'
   const hasPublishedShop = Boolean(profile.businessName && profile.slug)
   const previewHref = hasPublishedShop ? `/${profile.slug}` : '/dashboard/store'
+  const sellerAccent=getStoreAccent(profile)
+  const sellerTheme={
+    '--purple':sellerAccent,
+    '--purple-2':sellerAccent,
+    '--purple-3':`color-mix(in srgb, ${sellerAccent} 78%, white)`,
+    '--purple-4':`color-mix(in srgb, ${sellerAccent} 42%, white)`,
+    '--purple-soft':`color-mix(in srgb, ${sellerAccent} 12%, white)`,
+  } as CSSProperties
 
   return (
-    <div className="dashboard-shell">
+    <div className="dashboard-shell seller-themed" style={sellerTheme}>
       <aside className="dashboard-sidebar">
         <Logo />
         <div className="shop-switcher">
           {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">G</span>}
-          <div><strong>{shopName}</strong><small>{plan.charAt(0).toUpperCase()+plan.slice(1)} plan · 30 products</small></div>
+          <div><strong>{shopName}</strong><small>{plan.charAt(0).toUpperCase()+plan.slice(1)} plan · {plan==='free'?'100 products':'Unlimited products'}</small></div>
         </div>
         <nav>
           {links.map(({ href, label, icon: Icon }) => (

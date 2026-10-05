@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import type { Product } from '../data/mock'
 import { addToCart } from '../lib/cart'
-import { accentColors, fetchPublicProduct } from '../lib/storeData'
+import { fetchPublicProduct, getStoreAccent } from '../lib/storeData'
 import type { StoreProfile } from '../lib/storeData'
 
 type ProductData={product:Product;profile:StoreProfile;logo:string}
@@ -46,7 +46,7 @@ export function ProductPage({ id }: { id: string }) {
 
   const {product,profile,logo}=data
   const formatted=new Intl.NumberFormat('en-UG').format(product.price)
-  const style={ '--shop-accent': accentColors[profile.accent] } as CSSProperties
+  const style={ '--shop-accent': getStoreAccent(profile) } as CSSProperties
   const whatsapp=profile.whatsapp.replace(/\D/g,'')
   const message=encodeURIComponent('Hello '+(profile.businessName||'seller')+', I am interested in '+product.name+'.')
   const add=()=>{

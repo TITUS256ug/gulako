@@ -21,6 +21,7 @@ export type StoreProfile = {
   mtnMerchantCode: string
   airtelMerchantCode: string
   accent: AccentName
+  accentColor: string
   cover: string
 }
 
@@ -55,7 +56,7 @@ const RESERVED_SLUGS = new Set([
 export const emptyStoreProfile: StoreProfile = {
   businessName:'', slug:'', category:'', location:'', description:'', whatsapp:'+256',
   mapsLink:'', tiktok:'', instagram:'', deliveryInfo:'', paymentNetwork:'', paymentNumber:'',
-  mtnMerchantCode:'', airtelMerchantCode:'', accent:'violet', cover:'',
+  mtnMerchantCode:'', airtelMerchantCode:'', accent:'violet', accentColor:'#7c3aed', cover:'',
 }
 
 function safeParse<T>(key:string,fallback:T):T{
@@ -152,6 +153,7 @@ function rowToProfile(row:any):StoreProfile{
     mtnMerchantCode:row.mtn_merchant_code??'',
     airtelMerchantCode:row.airtel_merchant_code??'',
     accent:(row.accent??'violet') as AccentName,
+    accentColor:row.accent_color || accentColors[(row.accent??'violet') as AccentName],
     cover:row.cover_url??'',
   }
 }
@@ -220,6 +222,7 @@ export async function saveStoreProfile(profile:StoreProfile){
     mtn_merchant_code:profile.mtnMerchantCode,
     airtel_merchant_code:profile.airtelMerchantCode,
     accent:profile.accent,
+    accent_color:profile.accentColor,
     logo_url:getShopLogo(),
     cover_url:profile.cover,
     published:Boolean(profile.businessName&&validateStoreSlug(profile.slug).valid),
@@ -368,4 +371,10 @@ export async function fetchPublicProduct(id:string){
 
 export const accentColors:Record<AccentName,string>={
   violet:'#7c3aed',indigo:'#4f46e5',rose:'#e11d48',amber:'#d97706',teal:'#0d9488',
+}
+
+export function getStoreAccent(profile:Pick<StoreProfile,'accent'|'accentColor'>){
+  return /^#[0-9a-fA-F]{6}$/.test(profile.accentColor||'')
+    ? profile.accentColor
+    : accentColors[profile.accent]
 }
