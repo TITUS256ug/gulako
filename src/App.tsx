@@ -1,5 +1,6 @@
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from './pages/AuthPage'
+import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { DashboardAnalyticsPage, DashboardCustomersPage, DashboardHomePage, DashboardOrdersPage, DashboardProductsPage, DashboardSettingsPage, DashboardStorePage } from './pages/DashboardPages'
@@ -19,6 +20,7 @@ export default function App() {
   if (path === '/explore') { window.location.replace('/'); return null }
   if (path === '/pricing') { window.location.replace('/signin'); return null }
   if (path === '/signin' || path === '/login') return <AuthPage mode="signin" />
+  if (path === '/auth/callback') return <AuthCallbackPage />
   if (path === '/signup' || path === '/register') return <AuthPage mode="signup" />
   if (path === '/onboarding') return <OnboardingPage />
   if (path === '/cart') return <CartPage />
