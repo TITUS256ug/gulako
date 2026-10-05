@@ -5,6 +5,7 @@ import { InstallAppButton } from '../components/InstallAppButton'
 import { Logo } from '../components/Logo'
 import { backend, backendConfigured } from '../lib/backend'
 import { clearSellerLocalData } from '../lib/storeData'
+import { siteUrl } from '../lib/site'
 
 function authErrorMessage(message:string){
   const value=message.toLowerCase()
@@ -37,7 +38,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
         password,
         options:{
           data:{full_name:fullName},
-          emailRedirectTo:window.location.origin+'/auth/callback',
+          emailRedirectTo:siteUrl('/auth/callback'),
         },
       })
       if(error){setError(authErrorMessage(error.message));setBusy(false);return}
@@ -65,7 +66,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
     const chosen=provider==='google'?'google':'custom:tiktok'
     const {error}=await backend.auth.signInWithOAuth({
       provider:chosen as never,
-      options:{redirectTo:window.location.origin+'/auth/callback'},
+      options:{redirectTo:siteUrl('/auth/callback')},
     })
     if(error){
       const message=error.message.toLowerCase()
@@ -81,7 +82,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
     const {error}=await backend.auth.resend({
       type:'signup',
       email:pendingEmail,
-      options:{emailRedirectTo:window.location.origin+'/auth/callback'},
+      options:{emailRedirectTo:siteUrl('/auth/callback')},
     })
     if(error)setError(authErrorMessage(error.message))
     else setMessage('Verification email sent again.')
@@ -91,7 +92,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
     if(!backendConfigured){setError('Authentication is being connected. Please try again shortly.');return}
     const email=window.prompt('Enter your email address')
     if(!email)return
-    const {error}=await backend.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/signin'})
+    const {error}=await backend.auth.resetPasswordForEmail(email,{redirectTo:siteUrl('/signin')})
     setMessage(error?authErrorMessage(error.message):'Password reset email sent.')
   }
 

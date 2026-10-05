@@ -1,12 +1,12 @@
 import type { Product } from '../data/mock'
+import { siteUrl } from './site'
 
 function money(value:number){
   return new Intl.NumberFormat('en-UG').format(value)
 }
 
 export function publicUrl(path:string){
-  const origin=typeof window!=='undefined' ? window.location.origin : 'https://gulako.site'
-  return origin.replace(/\/$/,'') + (path.startsWith('/')?path:'/'+path)
+  return siteUrl(path)
 }
 
 export function whatsappUrl(phone:string,message:string){
