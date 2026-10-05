@@ -8,7 +8,7 @@ export default async function handler(req,res){
     return
   }
 
-  const clientKey=process.env.TIKTOK_CLIENT_KEY
+  const clientKey=(process.env.TIKTOK_CLIENT_KEY||'').trim()
   if(!clientKey){
     res.redirect(302,'https://gulako.site/signin?tiktok_error=setup')
     return
