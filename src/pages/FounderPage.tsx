@@ -51,8 +51,8 @@ export function FounderPage(){
     if(me?.role!=='founder'&&me?.role!=='admin'){setState('denied');return}
     const [{data:profiles},{data:settings},{data:upgradeRows}]=await Promise.all([
       backend.from('profiles').select('id,email,full_name,role,plan').order('created_at',{ascending:false}),
-      backend.from('billing_settings').select('mtn_merchant_code,airtel_merchant_code,bank_name,bank_account_name,bank_account_number').eq('id',true).maybeSingle(),
-      backend.from('plan_upgrade_requests').select('id,user_id,requested_plan,payment_method,transaction_ref,note,status,created_at').order('created_at',{ascending:false}).limit(30),
+      backend.from('billing_settings').select('mtn_merchant_code,airtel_merchant_code,bank_name,bank_account_name,bank_account_number,bank_swift,bank_country,bank_branch,bank_currency').eq('id',true).maybeSingle(),
+      backend.from('plan_upgrade_requests').select('id,user_id,requested_plan,payment_method,transaction_ref,note,status,created_at,currency,amount').order('created_at',{ascending:false}).limit(30),
     ])
     setRows((profiles??[]) as Row[])
     if(settings)setBilling({...blankBilling,...settings})
@@ -122,11 +122,14 @@ export function FounderPage(){
     <section className="founder-card founder-billing-settings">
       <div className="founder-card-title"><div><span className="section-kicker"><Smartphone size={14}/> Manual billing</span><h2>How sellers pay Gulako</h2><p>Use direct Mobile Money merchant codes or a bank account. No gateway integration is required.</p></div><button className="primary-button" onClick={()=>void saveBilling()} disabled={savingBilling}><Save size={16}/>{savingBilling?'Saving…':'Save payment details'}</button></div>
       <div className="founder-billing-grid">
-        <label><span>MTN MoMoPay merchant code</span><input value={billing.mtn_merchant_code} onChange={e=>setBilling({...billing,mtn_merchant_code:e.target.value.replace(/\D/g,'')})} placeholder="Merchant code"/></label>
-        <label><span>Airtel Money Pay merchant ID</span><input value={billing.airtel_merchant_code} onChange={e=>setBilling({...billing,airtel_merchant_code:e.target.value.replace(/[^a-zA-Z0-9]/g,'')})} placeholder="Merchant ID"/></label>
-        <label><span>Bank name</span><input value={billing.bank_name} onChange={e=>setBilling({...billing,bank_name:e.target.value})} placeholder="e.g. Stanbic Bank"/></label>
-        <label><span>Account name</span><input value={billing.bank_account_name} onChange={e=>setBilling({...billing,bank_account_name:e.target.value})} placeholder="Nile AI Solutions"/></label>
-        <label className="wide"><span>Account number</span><input value={billing.bank_account_number} onChange={e=>setBilling({...billing,bank_account_number:e.target.value})} placeholder="Bank account number"/></label>
+        <label><span>Uganda merchant code</span><input value={billing.mtn_merchant_code} onChange={e=>setBilling({...billing,mtn_merchant_code:e.target.value.replace(/\D/g,'')})} placeholder="7111441"/></label>
+        <label><span>Bank name</span><input value={billing.bank_name} onChange={e=>setBilling({...billing,bank_name:e.target.value})} placeholder="Centenary Bank"/></label>
+        <label><span>Account name</span><input value={billing.bank_account_name} onChange={e=>setBilling({...billing,bank_account_name:e.target.value})} placeholder="Account name"/></label>
+        <label><span>Account number</span><input value={billing.bank_account_number} onChange={e=>setBilling({...billing,bank_account_number:e.target.value})} placeholder="Account number"/></label>
+        <label><span>SWIFT / BIC</span><input value={billing.bank_swift} onChange={e=>setBilling({...billing,bank_swift:e.target.value.toUpperCase()})} placeholder="CERBUGKA"/></label>
+        <label><span>Bank country</span><input value={billing.bank_country} onChange={e=>setBilling({...billing,bank_country:e.target.value})} placeholder="Uganda"/></label>
+        <label><span>Branch</span><input value={billing.bank_branch} onChange={e=>setBilling({...billing,bank_branch:e.target.value})} placeholder="Mapeera"/></label>
+        <label><span>Receiving currency</span><select value={billing.bank_currency} onChange={e=>setBilling({...billing,bank_currency:e.target.value})}><option value="USD">USD</option><option value="UGX">UGX</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></label>
       </div>
       {message&&<p className="founder-message">{message}</p>}
     </section>
@@ -135,7 +138,7 @@ export function FounderPage(){
       <div className="founder-card-title"><div><span className="section-kicker"><Landmark size={14}/> Upgrade requests</span><h2>Payments awaiting review</h2></div></div>
       <div className="founder-requests">
         {requests.filter(item=>item.status==='pending').length===0?<div className="founder-empty">No pending upgrade requests.</div>:requests.filter(item=>item.status==='pending').map(item=><article key={item.id}>
-          <div><strong>{userLabel(item.user_id)}</strong><small>{item.requested_plan.toUpperCase()} · {item.payment_method.toUpperCase()} · {item.transaction_ref}</small>{item.note&&<em>{item.note}</em>}</div>
+          <div><strong>{userLabel(item.user_id)}</strong><small>{item.requested_plan.toUpperCase()} · {item.currency} {item.amount??''} · {item.payment_method.toUpperCase()} · {item.transaction_ref}</small>{item.note&&<em>{item.note}</em>}</div>
           <div className="founder-request-actions"><button className="approve" onClick={()=>void review(item,'approved')}><Check size={15}/> Approve</button><button className="reject" onClick={()=>void review(item,'rejected')}><X size={15}/> Reject</button></div>
         </article>)}
       </div>
