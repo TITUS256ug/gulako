@@ -15,6 +15,10 @@ type BillingSettings={
   bank_name:string
   bank_account_name:string
   bank_account_number:string
+  bank_swift:string
+  bank_country:string
+  bank_branch:string
+  bank_currency:string
 }
 type UpgradeRequest={
   id:string
@@ -25,9 +29,11 @@ type UpgradeRequest={
   note:string
   status:'pending'|'approved'|'rejected'
   created_at:string
+  currency:string
+  amount:number|null
 }
 
-const blankBilling:BillingSettings={mtn_merchant_code:'',airtel_merchant_code:'',bank_name:'',bank_account_name:'',bank_account_number:''}
+const blankBilling:BillingSettings={mtn_merchant_code:'',airtel_merchant_code:'',bank_name:'',bank_account_name:'',bank_account_number:'',bank_swift:'',bank_country:'',bank_branch:'',bank_currency:'USD'}
 
 export function FounderPage(){
   const [rows,setRows]=useState<Row[]>([])
