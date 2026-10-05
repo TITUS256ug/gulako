@@ -1,12 +1,12 @@
-import { ArrowUpRight, ExternalLink, Instagram, Link2, Map, MapPin, MessageCircle, Search, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
+import { ExternalLink, Instagram, Link2, Map, MapPin, MessageCircle, Search, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, CSSProperties } from 'react'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { ProductCard } from '../components/ProductCard'
 import type { Product } from '../data/mock'
-import { accentColors, fetchPublicShop, fetchRelatedShops, recordStoreView } from '../lib/storeData'
-import type { RelatedShop, StoreProfile } from '../lib/storeData'
+import { accentColors, fetchPublicShop, recordStoreView } from '../lib/storeData'
+import type { StoreProfile } from '../lib/storeData'
 
 type PublicShopData={
   profile:StoreProfile
@@ -17,7 +17,6 @@ type PublicShopData={
 
 export function ShopPage({ slug }: { slug?: string }) {
   const [shop,setShop]=useState<PublicShopData|null>(null)
-  const [related,setRelated]=useState<RelatedShop[]>([])
   const [ready,setReady]=useState(false)
   const [query,setQuery]=useState('')
   const [category,setCategory]=useState('All products')
@@ -29,11 +28,7 @@ export function ShopPage({ slug }: { slug?: string }) {
       if(!active)return
       setShop(data)
       setReady(true)
-      if(data){
-        void recordStoreView(slug)
-        const suggestions=await fetchRelatedShops(data.profile.category,slug,3)
-        if(active)setRelated(suggestions)
-      }
+      if(data)void recordStoreView(slug)
     })
     return()=>{active=false}
   },[slug])
@@ -127,19 +122,6 @@ export function ShopPage({ slug }: { slug?: string }) {
 
           {visibleProducts.length?<div className="product-grid premium-product-grid">{visibleProducts.map(item=><ProductCard product={item} key={item.id}/>)}</div>:<div className="empty-state storefront-products-empty"><ShoppingBag size={26}/><h3>No products found</h3><p>Try another search or category.</p></div>}
         </section>
-
-        {related.length>0&&<section className="related-shops-section">
-          <div className="related-shops-head"><div><span className="section-kicker">More to discover</span><h2>Related shops</h2><p>More Gulako shops in {profile.category}.</p></div></div>
-          <div className="related-shop-grid">
-            {related.map(item=><a className="related-shop-card" href={'/'+item.slug} key={item.slug}>
-              <div className="related-shop-mark" style={{background:accentColors[item.accent]}}>
-                {item.logo?<img src={item.logo} alt={item.businessName}/>:item.businessName.slice(0,1).toUpperCase()}
-              </div>
-              <div><small>{item.category}</small><strong>{item.businessName}</strong>{item.location&&<span><MapPin size={13}/>{item.location}</span>}</div>
-              <ArrowUpRight size={18}/>
-            </a>)}
-          </div>
-        </section>}
       </div>
     </main>
     <Footer/>

@@ -43,7 +43,7 @@ export const pricing = [
     price: 'UGX 0',
     note: 'Start selling',
     featured: false,
-    features: ['30 active products', 'Unlimited orders', 'WhatsApp ordering', 'Basic location & shop link'],
+    features: ['100 active products', 'Unlimited orders', 'WhatsApp ordering', 'Basic location & shop link'],
   },
   {
     name: 'Pro',

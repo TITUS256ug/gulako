@@ -49,9 +49,8 @@ export function CheckoutPage() {
     window.setTimeout(()=>setCopied(''),1200)
   }
 
-  const openMoneyMenu=(network:string)=>{
-    const code=network==='MTN MoMo'?'*165#':network==='Airtel Money'?'*185#':''
-    if(!code)return
+  const openMoneyMenu=(network:'MTN MoMoPay'|'Airtel Money Pay')=>{
+    const code=network==='MTN MoMoPay'?'*165*3#':'*185*9#'
     window.location.href='tel:'+encodeURIComponent(code)
   }
 
@@ -72,7 +71,7 @@ export function CheckoutPage() {
     <div className="checkout-heading premium-checkout-heading">
       <span className="section-kicker">Mobile Money checkout</span>
       <h1>Complete your payment</h1>
-      <p>Pay each seller directly. Gulako shows the exact number and amount, then opens your network's Mobile Money menu for you to confirm on your phone.</p>
+      <p>Pay each seller directly using their MTN MoMoPay or Airtel Money Pay merchant code. Gulako shows the exact code and amount, then opens the correct payment menu on your phone.</p>
     </div>
 
     <div className="checkout-groups">
@@ -82,8 +81,10 @@ export function CheckoutPage() {
         const whatsapp=payment?.whatsapp.replace(/\D/g,'')??''
         const summary=group.map(line=>`${line.quantity}x ${line.product.name}`).join(', ')
         const message=encodeURIComponent(`Hello ${payment?.businessName||group[0].product.shopName}, I want to pay UGX ${money(subtotal)} for ${summary}.`)
-        const network=payment?.paymentNetwork??''
-        const number=payment?.paymentNumber??''
+        const mtnCode=payment?.mtnMerchantCode?.trim()??''
+        const airtelCode=payment?.airtelMerchantCode?.trim()??''
+        const fallbackNetwork=payment?.paymentNetwork??''
+        const fallbackNumber=payment?.paymentNumber??''
         return <section className="checkout-seller-card" key={slug}>
           <div className="checkout-seller-head">
             <div><small>Paying</small><h2>{payment?.businessName||group[0].product.shopName}</h2><span>{group.reduce((sum,line)=>sum+line.quantity,0)} item{group.reduce((sum,line)=>sum+line.quantity,0)===1?'':'s'}</span></div>
@@ -94,21 +95,32 @@ export function CheckoutPage() {
             {group.map(line=><div key={line.productId}><span>{line.quantity} × {line.product.name}</span><strong>UGX {money(line.product.price*line.quantity)}</strong></div>)}
           </div>
 
-          {network&&number?<div className="momo-payment-card">
-            <div className="momo-card-head"><span><Smartphone size={20}/></span><div><small>{network}</small><strong>{number}</strong></div></div>
-            <div className="momo-copy-actions">
-              <button onClick={()=>copy(number,slug+'number')}>{copied===slug+'number'?<Check size={16}/>:<Copy size={16}/>} {copied===slug+'number'?'Copied':'Copy number'}</button>
-              <button onClick={()=>copy(String(subtotal),slug+'amount')}>{copied===slug+'amount'?<Check size={16}/>:<Copy size={16}/>} {copied===slug+'amount'?'Copied':'Copy amount'}</button>
-            </div>
-            <ol>
-              <li>Tap <strong>Open {network}</strong>.</li>
-              <li>Choose Send Money and enter <strong>{number}</strong>.</li>
-              <li>Enter <strong>UGX {money(subtotal)}</strong> and confirm the recipient before entering your PIN.</li>
-            </ol>
-            <button className="primary-button large full-width momo-open-button" onClick={()=>openMoneyMenu(network)}><Phone size={18}/> Open {network} menu</button>
-            <small className="payment-safety"><ShieldCheck size={14}/> Gulako never asks for your Mobile Money PIN. Your network handles confirmation.</small>
+          {mtnCode||airtelCode?<div className="merchant-payment-options">
+            <div className="merchant-payment-title"><div><strong>Choose how to pay</strong><span>Pay this seller directly using their verified business payment details.</span></div><b>UGX {money(subtotal)}</b></div>
+            {mtnCode&&<div className="merchant-pay-card mtn-pay">
+              <div className="merchant-pay-brand"><span><img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/MTN_2022_logo.svg" alt="MTN"/></span><div><small>MTN MoMoPay merchant code</small><strong>{mtnCode}</strong></div></div>
+              <div className="merchant-pay-actions">
+                <button onClick={()=>copy(mtnCode,slug+'mtn')}>{copied===slug+'mtn'?<Check size={16}/>:<Copy size={16}/>} {copied===slug+'mtn'?'Copied':'Copy code'}</button>
+                <button onClick={()=>copy(String(subtotal),slug+'mtnamount')}>{copied===slug+'mtnamount'?<Check size={16}/>:<Copy size={16}/>} Copy amount</button>
+              </div>
+              <p>Dial <strong>*165*3#</strong>, enter merchant code <strong>{mtnCode}</strong>, enter UGX {money(subtotal)}, confirm the business name, then enter your PIN.</p>
+              <button className="primary-button large full-width merchant-launch mtn-launch" onClick={()=>openMoneyMenu('MTN MoMoPay')}><Phone size={18}/> Pay with MTN MoMo</button>
+            </div>}
+            {airtelCode&&<div className="merchant-pay-card airtel-pay">
+              <div className="merchant-pay-brand"><span><img src="https://upload.wikimedia.org/wikipedia/commons/1/18/Airtel_logo.svg" alt="Airtel"/></span><div><small>Airtel Money Pay merchant ID</small><strong>{airtelCode}</strong></div></div>
+              <div className="merchant-pay-actions">
+                <button onClick={()=>copy(airtelCode,slug+'airtel')}>{copied===slug+'airtel'?<Check size={16}/>:<Copy size={16}/>} {copied===slug+'airtel'?'Copied':'Copy ID'}</button>
+                <button onClick={()=>copy(String(subtotal),slug+'airtelamount')}>{copied===slug+'airtelamount'?<Check size={16}/>:<Copy size={16}/>} Copy amount</button>
+              </div>
+              <p>Dial <strong>*185*9#</strong>, enter merchant ID <strong>{airtelCode}</strong>, follow the Airtel Money Pay prompts and confirm on your phone.</p>
+              <button className="primary-button large full-width merchant-launch airtel-launch" onClick={()=>openMoneyMenu('Airtel Money Pay')}><Phone size={18}/> Pay with Airtel Money</button>
+            </div>}
+            <small className="payment-safety"><ShieldCheck size={14}/> Always confirm the displayed recipient/business before entering your Mobile Money PIN. Gulako never sees your PIN.</small>
+          </div>:fallbackNetwork&&fallbackNumber?<div className="momo-payment-card">
+            <div className="momo-card-head"><span><Smartphone size={20}/></span><div><small>{fallbackNetwork}</small><strong>{fallbackNumber}</strong></div></div>
+            <p className="legacy-payment-note">This seller has not added a merchant code yet. Use the number above only after confirming it with the seller.</p>
           </div>:<div className="momo-missing">
-            <Smartphone size={21}/><div><strong>Mobile Money details not added yet</strong><span>Contact the seller to arrange payment.</span></div>
+            <Smartphone size={21}/><div><strong>Merchant payment details not added yet</strong><span>Contact the seller to arrange payment.</span></div>
           </div>}
 
           {whatsapp&&<a className="soft-button full-width checkout-whatsapp" href={'https://wa.me/'+whatsapp+'?text='+message} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Confirm order with seller</a>}

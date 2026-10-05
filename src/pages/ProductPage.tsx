@@ -91,7 +91,7 @@ export function ProductPage({ id }: { id: string }) {
           {profile.deliveryInfo&&<span><Truck size={17}/> Delivery available</span>}
         </div>
 
-        <div className="mobile-money-hint"><Sparkles size={18}/><div><strong>Mobile Money checkout</strong><span>Buy now takes you to a simple payment screen with the seller's Mobile Money details.</span></div></div>
+        <div className="mobile-money-hint"><Sparkles size={18}/><div><strong>Direct merchant checkout</strong><span>Buy now takes you to the seller's MTN MoMoPay or Airtel Money Pay merchant code when available.</span></div></div>
 
         <div className="product-cta-stack premium-product-actions">
           <button className="primary-button large full-width" onClick={buy}><ShoppingBag size={19}/> Buy now</button>

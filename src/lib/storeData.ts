@@ -18,6 +18,8 @@ export type StoreProfile = {
   deliveryInfo: string
   paymentNetwork: PaymentNetwork
   paymentNumber: string
+  mtnMerchantCode: string
+  airtelMerchantCode: string
   accent: AccentName
   cover: string
 }
@@ -53,7 +55,7 @@ const RESERVED_SLUGS = new Set([
 export const emptyStoreProfile: StoreProfile = {
   businessName:'', slug:'', category:'', location:'', description:'', whatsapp:'',
   mapsLink:'', tiktok:'', instagram:'', deliveryInfo:'', paymentNetwork:'', paymentNumber:'',
-  accent:'violet', cover:'',
+  mtnMerchantCode:'', airtelMerchantCode:'', accent:'violet', cover:'',
 }
 
 function safeParse<T>(key:string,fallback:T):T{
@@ -147,6 +149,8 @@ function rowToProfile(row:any):StoreProfile{
     deliveryInfo:row.delivery_info??'',
     paymentNetwork:(row.payment_network??'') as PaymentNetwork,
     paymentNumber:row.payment_number??'',
+    mtnMerchantCode:row.mtn_merchant_code??'',
+    airtelMerchantCode:row.airtel_merchant_code??'',
     accent:(row.accent??'violet') as AccentName,
     cover:row.cover_url??'',
   }
@@ -213,6 +217,8 @@ export async function saveStoreProfile(profile:StoreProfile){
     delivery_info:profile.deliveryInfo,
     payment_network:profile.paymentNetwork,
     payment_number:profile.paymentNumber,
+    mtn_merchant_code:profile.mtnMerchantCode,
+    airtel_merchant_code:profile.airtelMerchantCode,
     accent:profile.accent,
     logo_url:getShopLogo(),
     cover_url:profile.cover,

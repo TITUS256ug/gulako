@@ -7,7 +7,7 @@ import { ShopLogoUpload } from '../components/ShopLogoUpload'
 import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
 import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, hydrateSellerData, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
-import type { AccentName, PaymentNetwork, StoreProfile } from '../lib/storeData'
+import type { AccentName, StoreProfile } from '../lib/storeData'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
 
@@ -22,7 +22,7 @@ function useAccountPlan(){
       if(data?.plan)setPlan(data.plan as Plan)
     })()
   },[])
-  const limit=plan==='free'?30:plan==='pro'?250:null
+  const limit=plan==='free'?100:plan==='pro'?250:null
   return{plan,limit}
 }
 
@@ -240,7 +240,7 @@ export function DashboardProductsPage(){
           <div className="inventory-card-actions"><div className="inventory-primary-actions"><button className="inventory-edit" onClick={()=>openForm(p.id)}><Pencil size={14}/> Edit</button><button className="inventory-duplicate" onClick={()=>duplicateSellerProduct(p.id)}><Copy size={14}/> Duplicate</button></div><button className="inventory-delete" onClick={()=>deleteSellerProduct(p.id)}><Trash2 size={14}/> Remove</button></div>
         </article>)}
         {(limit===null||products.length<limit)&&<button className="add-product-card" onClick={()=>openForm()}><PackagePlus size={26}/><strong>Add product</strong><span>{limit===null?'Unlimited product slots':`${limit-products.length} slots left on ${plan}`}</span></button>}
-      </div> : <button className="add-product-card empty-add-product" onClick={()=>openForm()}><PackagePlus size={30}/><strong>Add your first product</strong><span>30 product slots available on Free</span></button>}
+      </div> : <button className="add-product-card empty-add-product" onClick={()=>openForm()}><PackagePlus size={30}/><strong>Add your first product</strong><span>100 product slots available on Free</span></button>}
     </section>
   </DashboardShell>
 }
@@ -353,9 +353,22 @@ export function DashboardStorePage(){
           <label className="wide premium-link-field"><span>Shop link</span><div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="yourshop"/></div><small className={slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Choose a clean shop link using only letters and numbers.</small></label>
           <label className="wide"><span>Description</span><textarea value={profile.description} onChange={e=>update('description',e.target.value)} placeholder="Describe your business"/></label>
           <label className="wide"><span>WhatsApp</span><input value={profile.whatsapp} onChange={e=>update('whatsapp',e.target.value)} placeholder="+256..."/></label>
-          <label><span>Mobile Money network</span><select value={profile.paymentNetwork} onChange={e=>update('paymentNetwork',e.target.value as PaymentNetwork)}><option value="">Select network</option><option value="MTN MoMo">MTN MoMo</option><option value="Airtel Money">Airtel Money</option></select></label>
-          <label><span>Mobile Money number</span><input value={profile.paymentNumber} onChange={e=>update('paymentNumber',e.target.value)} inputMode="tel" placeholder="e.g. 0772 123 456"/></label>
-          <label className="wide payment-note"><small>Customers will see this number only at checkout. Gulako opens the Mobile Money menu; the customer confirms payment on their phone.</small></label>
+          <div className="wide merchant-setup">
+            <div className="merchant-setup-head"><div><span className="section-kicker">Get paid directly</span><h3>Merchant payment codes</h3><p>Add either or both. Customers pay your business directly from checkout.</p></div></div>
+            <div className="merchant-code-grid">
+              <label className="merchant-code-card mtn">
+                <span className="merchant-brand"><img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/MTN_2022_logo.svg" alt="MTN"/><b>MTN MoMoPay</b></span>
+                <input value={profile.mtnMerchantCode} onChange={e=>update('mtnMerchantCode',e.target.value.replace(/\D/g,'').slice(0,12))} inputMode="numeric" placeholder="6-digit merchant code"/>
+                <small>Customers pay through *165*3# using this merchant code.</small>
+              </label>
+              <label className="merchant-code-card airtel">
+                <span className="merchant-brand"><img src="https://upload.wikimedia.org/wikipedia/commons/1/18/Airtel_logo.svg" alt="Airtel"/><b>Airtel Money Pay</b></span>
+                <input value={profile.airtelMerchantCode} onChange={e=>update('airtelMerchantCode',e.target.value.replace(/[^a-zA-Z0-9]/g,'').slice(0,20))} inputMode="text" autoCapitalize="characters" placeholder="Merchant number / ID"/>
+                <small>Customers pay through *185*9# using this merchant ID.</small>
+              </label>
+            </div>
+            <small className="merchant-security-note">Gulako never asks you or your customers for a Mobile Money PIN.</small>
+          </div>
           <label className="wide"><span>Google Maps / Plus Code</span><input value={profile.mapsLink} onChange={e=>update('mapsLink',e.target.value)} placeholder="Paste link or code"/></label>
           <label><span>TikTok</span><input value={profile.tiktok} onChange={e=>update('tiktok',e.target.value)} placeholder="@yourbusiness"/></label>
           <label><span>Instagram</span><input value={profile.instagram} onChange={e=>update('instagram',e.target.value)} placeholder="@yourbusiness"/></label>

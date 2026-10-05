@@ -857,3 +857,37 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
 .demo-test-banner{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;margin:-8px 0 24px;padding:14px 16px;border:1px solid color-mix(in srgb,var(--purple-2) 18%,var(--border));border-radius:16px;background:linear-gradient(135deg,var(--surface),var(--purple-soft));box-shadow:var(--shadow-soft);color:var(--purple-2)}
 .demo-test-banner>div{display:grid;gap:2px}.demo-test-banner strong{font-size:11px}.demo-test-banner span{font-size:10px;color:var(--muted)}.demo-test-banner a{font-size:10px;font-weight:900;padding:9px 11px;border-radius:10px;background:var(--purple-2);color:#fff}
 @media(max-width:620px){.demo-test-banner{grid-template-columns:auto 1fr}.demo-test-banner a{grid-column:1/-1;text-align:center}}
+
+
+/* Merchant-code payments */
+.merchant-setup{padding-top:4px}
+.merchant-setup-head h3{font:800 19px 'Manrope';margin:5px 0 3px;letter-spacing:-.5px}
+.merchant-setup-head p{margin:0 0 13px;color:var(--muted);font-size:11px}
+.merchant-code-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.merchant-code-card{padding:15px!important;border:1px solid var(--border);border-radius:17px;background:var(--surface-2);gap:10px!important}
+.merchant-code-card.mtn{background:linear-gradient(145deg,#fffdf0,#fff)}
+.merchant-code-card.airtel{background:linear-gradient(145deg,#fff4f4,#fff)}
+.merchant-brand{display:flex;align-items:center;gap:9px}
+.merchant-brand img{width:42px;height:30px;object-fit:contain}
+.merchant-code-card.airtel .merchant-brand img{width:31px;height:31px}
+.merchant-brand b{font-size:11px;color:var(--text)}
+.merchant-code-card input{background:#fff!important;font-weight:800;letter-spacing:.5px}
+.merchant-code-card small,.merchant-security-note{font-size:9px;line-height:1.5;color:var(--muted)}
+.merchant-security-note{display:block;margin-top:9px}
+.merchant-payment-options{display:grid;gap:12px}
+.merchant-payment-title{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:2px}
+.merchant-payment-title>div{display:grid;gap:3px}.merchant-payment-title strong{font-size:13px}.merchant-payment-title span{font-size:10px;color:var(--muted)}.merchant-payment-title>b{font:800 18px 'Manrope';white-space:nowrap}
+.merchant-pay-card{padding:17px;border-radius:18px;border:1px solid var(--border);display:grid;gap:12px}
+.merchant-pay-card.mtn-pay{background:linear-gradient(145deg,#fff9cf,#fff);border-color:#f2df69}
+.merchant-pay-card.airtel-pay{background:linear-gradient(145deg,#fff0f0,#fff);border-color:#f0caca}
+.merchant-pay-brand{display:flex;align-items:center;gap:11px}.merchant-pay-brand>span{width:50px;height:42px;border-radius:12px;background:#fff;display:grid;place-items:center;border:1px solid rgba(0,0,0,.06)}
+.merchant-pay-brand img{max-width:38px;max-height:30px}.merchant-pay-brand>div{display:grid;gap:2px}.merchant-pay-brand small{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:900;letter-spacing:.05em}.merchant-pay-brand strong{font:800 19px 'Manrope';letter-spacing:.5px}
+.merchant-pay-actions{display:flex;gap:8px}.merchant-pay-actions button{min-height:37px;border:1px solid var(--border);border-radius:10px;background:#fff;padding:0 11px;display:flex;align-items:center;gap:6px;font-size:9px;font-weight:900}
+.merchant-pay-card p{margin:0;color:var(--muted);font-size:10px;line-height:1.65}
+.mtn-launch{background:#ffcb05!important;color:#111!important;border-color:#ffcb05!important}
+.airtel-launch{background:#e40000!important;border-color:#e40000!important}
+.legacy-payment-note{margin:10px 0 0;color:var(--muted);font-size:10px;line-height:1.55}
+@media(max-width:620px){
+  .merchant-code-grid{grid-template-columns:1fr}
+  .merchant-payment-title{flex-direction:column}
+}
