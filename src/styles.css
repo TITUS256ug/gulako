@@ -973,3 +973,70 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
 .founder-request-actions{display:flex;gap:7px}.founder-request-actions button{min-height:34px;padding:0 10px;border-radius:9px;border:0;display:flex;align-items:center;gap:5px;font-size:9px;font-weight:900}.founder-request-actions .approve{background:#e6f7ec;color:var(--green)}.founder-request-actions .reject{background:#fff0f0;color:var(--red)}
 .founder-empty{padding:22px;text-align:center;color:var(--muted);font-size:11px;border:1px dashed var(--border);border-radius:14px}
 @media(max-width:620px){.founder-card-title{display:grid}.founder-billing-grid{grid-template-columns:1fr}.founder-billing-grid label.wide{grid-column:auto}.founder-requests article{align-items:flex-start;flex-direction:column}}
+
+
+/* Billing currency switch */
+.billing-currency-toggle{
+  display:inline-flex;
+  gap:6px;
+  padding:5px;
+  margin:0 0 16px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface);
+  box-shadow:var(--shadow-soft);
+}
+.billing-currency-toggle button{
+  min-height:40px;
+  padding:0 13px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:10px;
+  font-weight:900;
+}
+.billing-currency-toggle button.active{
+  background:var(--purple-soft);
+  color:var(--purple-2);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--purple-2) 14%,transparent);
+}
+.billing-reference-summary{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:3px 12px;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface-2);
+}
+.billing-reference-summary span{font-size:10px;font-weight:900}
+.billing-reference-summary strong{font:800 18px 'Manrope';color:var(--purple-2)}
+.billing-reference-summary small{grid-column:1/-1;color:var(--muted);font-size:9px}
+.billing-local-payment,.billing-bank-transfer{display:grid;gap:12px}
+
+/* Premium WhatsApp actions */
+.premium-whatsapp-button{
+  background:#19a463!important;
+  color:#fff!important;
+  border-color:#19a463!important;
+  box-shadow:0 10px 24px rgba(25,164,99,.16)!important;
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;
+}
+.premium-whatsapp-button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 30px rgba(25,164,99,.22)!important;
+  filter:saturate(1.04);
+}
+.checkout-whatsapp.premium-whatsapp-button{
+  min-height:50px;
+  justify-content:center;
+  font-weight:900;
+}
+@media(max-width:620px){
+  .billing-currency-toggle{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .billing-currency-toggle button{justify-content:center;padding:0 8px}
+}

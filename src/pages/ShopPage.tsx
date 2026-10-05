@@ -6,6 +6,7 @@ import { Header } from '../components/Header'
 import { ProductCard } from '../components/ProductCard'
 import type { Product } from '../data/mock'
 import { fetchPublicShop, getStoreAccent, recordStoreView } from '../lib/storeData'
+import { shopWhatsappMessage, whatsappUrl } from '../lib/whatsapp'
 import type { StoreProfile } from '../lib/storeData'
 
 type PublicShopData={
@@ -75,7 +76,7 @@ export function ShopPage({ slug }: { slug?: string }) {
 
   const {profile,logo}=shop
   const accent=getStoreAccent(profile)
-  const whatsapp=profile.whatsapp.replace(/\D/g,'')
+  const whatsappHref=whatsappUrl(profile.whatsapp,shopWhatsappMessage(profile.businessName,profile.slug))
   const instagramUrl=profile.instagram?'https://instagram.com/'+profile.instagram.replace(/^@/,''):''
   const style={ '--shop-accent': accent } as CSSProperties
 
@@ -102,7 +103,7 @@ export function ShopPage({ slug }: { slug?: string }) {
 
           <div className="premium-shop-actions">
             <button className="premium-share" onClick={shareShop}><Link2 size={17}/> Share shop</button>
-            {whatsapp&&<a href={'https://wa.me/'+whatsapp} target="_blank" rel="noreferrer"><MessageCircle size={17}/> WhatsApp</a>}
+            {whatsappHref&&<a className="premium-whatsapp-button" href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle size={17}/> Chat on WhatsApp</a>}
             {profile.mapsLink&&<a href={profile.mapsLink} target="_blank" rel="noreferrer"><Map size={17}/> Directions <ExternalLink size={12}/></a>}
             {instagramUrl&&<a href={instagramUrl} target="_blank" rel="noreferrer"><Instagram size={17}/> Instagram</a>}
           </div>

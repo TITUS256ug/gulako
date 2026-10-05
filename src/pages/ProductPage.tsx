@@ -6,6 +6,7 @@ import { Header } from '../components/Header'
 import type { Product } from '../data/mock'
 import { addToCart } from '../lib/cart'
 import { fetchPublicProduct, getStoreAccent } from '../lib/storeData'
+import { productWhatsappMessage, whatsappUrl } from '../lib/whatsapp'
 import type { StoreProfile } from '../lib/storeData'
 
 type ProductData={product:Product;profile:StoreProfile;logo:string}
@@ -47,8 +48,8 @@ export function ProductPage({ id }: { id: string }) {
   const {product,profile,logo}=data
   const formatted=new Intl.NumberFormat('en-UG').format(product.price)
   const style={ '--shop-accent': getStoreAccent(profile) } as CSSProperties
-  const whatsapp=profile.whatsapp.replace(/\D/g,'')
-  const message=encodeURIComponent('Hello '+(profile.businessName||'seller')+', I am interested in '+product.name+'.')
+  const whatsappMessage=productWhatsappMessage(product,profile.businessName||product.shopName)
+  const whatsappHref=whatsappUrl(profile.whatsapp,whatsappMessage)
   const add=()=>{
     addToCart(product)
     setAdded(true)
@@ -96,7 +97,7 @@ export function ProductPage({ id }: { id: string }) {
         <div className="product-cta-stack premium-product-actions">
           <button className="primary-button large full-width" onClick={buy}><ShoppingBag size={19}/> Buy now</button>
           <button className={added?'soft-button large full-width added':'soft-button large full-width'} onClick={add}>{added?<Check size={18}/>:<ShoppingBag size={18}/>} {added?'Added to cart':'Add to cart'}</button>
-          {whatsapp&&<a className="whatsapp-product" href={'https://wa.me/'+whatsapp+'?text='+message} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Ask on WhatsApp</a>}
+          {whatsappHref&&<a className="whatsapp-product premium-whatsapp-button" href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Chat on WhatsApp</a>}
         </div>
         <small className="browser-cart-note">Your cart is saved on this browser so you can come back later.</small>
       </div>

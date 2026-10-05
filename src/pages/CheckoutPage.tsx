@@ -4,6 +4,7 @@ import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { cartDetails } from '../lib/cart'
 import { fetchPublicShop } from '../lib/storeData'
+import { orderWhatsappMessage, whatsappUrl } from '../lib/whatsapp'
 import type { StoreProfile } from '../lib/storeData'
 
 type ShopPayment = {
@@ -78,9 +79,8 @@ export function CheckoutPage() {
       {groups.map(([slug,group])=>{
         const payment=shops[slug]?.profile
         const subtotal=group.reduce((sum,line)=>sum+line.product.price*line.quantity,0)
-        const whatsapp=payment?.whatsapp.replace(/\D/g,'')??''
-        const summary=group.map(line=>`${line.quantity}x ${line.product.name}`).join(', ')
-        const message=encodeURIComponent(`Hello ${payment?.businessName||group[0].product.shopName}, I want to pay UGX ${money(subtotal)} for ${summary}.`)
+        const shopName=payment?.businessName||group[0].product.shopName
+        const whatsappHref=payment?.whatsapp ? whatsappUrl(payment.whatsapp,orderWhatsappMessage(group,shopName,slug)) : ''
         const mtnCode=payment?.mtnMerchantCode?.trim()??''
         const airtelCode=payment?.airtelMerchantCode?.trim()??''
         const fallbackNetwork=payment?.paymentNetwork??''
@@ -123,7 +123,7 @@ export function CheckoutPage() {
             <Smartphone size={21}/><div><strong>Merchant payment details not added yet</strong><span>Contact the seller to arrange payment.</span></div>
           </div>}
 
-          {whatsapp&&<a className="soft-button full-width checkout-whatsapp" href={'https://wa.me/'+whatsapp+'?text='+message} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Confirm order with seller</a>}
+          {whatsappHref&&<a className="soft-button full-width checkout-whatsapp premium-whatsapp-button" href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Confirm order on WhatsApp</a>}
         </section>
       })}
     </div>
