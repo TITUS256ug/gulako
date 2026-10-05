@@ -1,5 +1,5 @@
 import { ArrowRight, Eye, LockKeyhole, Mail, Music2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { InstallAppButton } from '../components/InstallAppButton'
 import { Logo } from '../components/Logo'
@@ -22,6 +22,23 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
   const [busy,setBusy]=useState(false)
   const [pendingEmail,setPendingEmail]=useState('')
   const isSignup = mode === 'signup'
+
+  useEffect(()=>{
+    const reason=new URLSearchParams(window.location.search).get('tiktok_error')
+    if(!reason)return
+    const messages:Record<string,string>={
+      setup:'TikTok sign-in is being connected. Please try again shortly.',
+      denied:'TikTok sign-in was cancelled.',
+      state:'TikTok sign-in could not be verified securely. Please try again.',
+      token:'TikTok could not complete authorization. Please try again.',
+      profile:'TikTok profile information could not be loaded.',
+      account:'Gulako could not create your TikTok account.',
+      identity:'Gulako could not link your TikTok account.',
+      session:'Gulako could not finish signing you in.',
+      unexpected:'TikTok sign-in failed unexpectedly. Please try again.',
+    }
+    setError(messages[reason]||'TikTok sign-in could not be completed.')
+  },[])
 
   const submit=async(e:FormEvent<HTMLFormElement>)=>{
     e.preventDefault()
@@ -62,16 +79,18 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
 
   const social=async(provider:'google'|'tiktok')=>{
     setError('')
+    if(provider==='tiktok'){
+      window.location.assign('/api/tiktok/login')
+      return
+    }
     if(!backendConfigured){setError('Authentication is being connected. Please try again shortly.');return}
-    const chosen=provider==='google'?'google':'custom:tiktok'
     const {error}=await backend.auth.signInWithOAuth({
-      provider:chosen as never,
+      provider:'google',
       options:{redirectTo:siteUrl('/auth/callback')},
     })
     if(error){
       const message=error.message.toLowerCase()
-      if(provider==='tiktok') setError('TikTok sign-in is ready in Gulako. Connect the TikTok provider credentials in Supabase to activate it.')
-      else if(message.includes('provider')||message.includes('oauth')) setError('Google sign-in is ready in Gulako. Connect the Google provider credentials in Supabase to activate it.')
+      if(message.includes('provider')||message.includes('oauth')) setError('Google sign-in is ready in Gulako. Connect the Google provider credentials in Supabase to activate it.')
       else setError(authErrorMessage(error.message))
     }
   }

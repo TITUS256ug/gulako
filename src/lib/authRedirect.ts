@@ -12,6 +12,20 @@ function cleanAuthUrl() {
 
 export async function resolveAuthSessionFromUrl() {
   const url = new URL(window.location.href)
+  const tokenHash=url.searchParams.get('token_hash')
+  const tokenType=url.searchParams.get('type')
+
+  if(tokenHash && tokenType==='magiclink'){
+    const {data,error}=await backend.auth.verifyOtp({
+      token_hash:tokenHash,
+      type:'magiclink',
+    })
+    if(!error && data.session){
+      cleanAuthUrl()
+      return data.session
+    }
+  }
+
   const code = url.searchParams.get('code')
 
   if (code) {
