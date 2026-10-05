@@ -7,7 +7,7 @@ import { ShopLogoUpload } from '../components/ShopLogoUpload'
 import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
 import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreProfile, getStoreViews, hydrateSellerData, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
-import type { AccentName, StoreProfile } from '../lib/storeData'
+import type { AccentName, PaymentNetwork, StoreProfile } from '../lib/storeData'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
 
@@ -133,7 +133,7 @@ export function DashboardProductsPage(){
   const {plan,limit}=useAccountPlan()
   const [showForm,setShowForm]=useState(()=>new URLSearchParams(window.location.search).get('add')==='1')
   const [editingId,setEditingId]=useState<string|null>(null)
-  const [image,setImage]=useState('')
+  const [images,setImages]=useState<string[]>([])
   const [error,setError]=useState('')
   const inputRef=useRef<HTMLInputElement>(null)
   const editingProduct=editingId ? products.find(product=>product.id===editingId) : undefined
@@ -141,7 +141,7 @@ export function DashboardProductsPage(){
   const openForm=(productId?:string)=>{
     const product=productId ? products.find(item=>item.id===productId) : undefined
     setEditingId(product?.id ?? null)
-    setImage(product?.image ?? '')
+    setImages(product?.images?.length ? product.images : (product?.image ? [product.image] : []))
     setShowForm(true)
     setError('')
     window.history.replaceState({},'', product ? '/dashboard/products?edit='+product.id : '/dashboard/products?add=1')
@@ -149,22 +149,27 @@ export function DashboardProductsPage(){
   const closeForm=()=>{
     setShowForm(false)
     setEditingId(null)
-    setImage('')
+    setImages([])
     setError('')
     window.history.replaceState({},'', '/dashboard/products')
   }
 
-  const pickImage=async(file?:File)=>{
-    if(!file)return
-    if(!file.type.startsWith('image/')){setError('Choose a PNG, JPG or WEBP image.');return}
-    if(file.size>1_500_000){setError('Product image must be smaller than 1.5 MB.');return}
+  const pickImages=async(files?:FileList|null)=>{
+    if(!files?.length)return
+    const incoming=Array.from(files)
+    if(images.length+incoming.length>5){setError('You can add up to 5 photos per product.');return}
+    if(incoming.some(file=>!file.type.startsWith('image/'))){setError('Choose PNG, JPG or WEBP images.');return}
+    if(incoming.some(file=>file.size>1_500_000)){setError('Each product image must be smaller than 1.5 MB.');return}
     try{
-      setImage(await uploadSellerAsset(file,'product'))
+      const uploaded=await Promise.all(incoming.map(file=>uploadSellerAsset(file,'product')))
+      setImages(current=>[...current,...uploaded].slice(0,5))
       setError('')
     }catch(err){
-      setError(err instanceof Error?err.message:'Could not upload product image.')
+      setError(err instanceof Error?err.message:'Could not upload product images.')
     }
   }
+
+  const removeImage=(url:string)=>setImages(current=>current.filter(item=>item!==url))
 
   const submit=(e:FormEvent<HTMLFormElement>)=>{
     e.preventDefault()
@@ -185,7 +190,8 @@ export function DashboardProductsPage(){
       category,
       price,
       currency:'UGX',
-      image,
+      image:images[0]??'',
+      images,
       description,
       stock:Math.max(0,stock),
       negotiable,
@@ -199,11 +205,18 @@ export function DashboardProductsPage(){
     {showForm && <section className="dash-card premium-card product-editor-card">
       <div className="dash-card-head"><div><span className="section-kicker">{editingId?'Edit product':'New product'}</span><h2>{editingId?'Edit product':'Add a product'}</h2><p>{editingId?'Update this product and save your changes.':'Products you save appear in your storefront preview.'}</p></div><button className="icon-button" onClick={closeForm} aria-label="Close"><X size={18}/></button></div>
       <form key={editingId ?? 'new-product'} className="product-editor-form" onSubmit={submit}>
-        <div className="product-image-editor">
-          <button type="button" className="product-image-drop" onClick={()=>inputRef.current?.click()}>
-            {image?<img src={image} alt="Product preview"/>:<><ImagePlus size={28}/><strong>Add product image</strong><span>PNG, JPG or WEBP</span></>}
-          </button>
-          <input ref={inputRef} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={(e:ChangeEvent<HTMLInputElement>)=>pickImage(e.target.files?.[0])}/>
+        <div className="product-image-editor gallery-editor">
+          <div className="product-gallery-editor">
+            {images.map((url,index)=><div className="product-gallery-thumb" key={url}>
+              <img src={url} alt={`Product photo ${index+1}`}/>
+              {index===0&&<span>Main</span>}
+              <button type="button" onClick={()=>removeImage(url)} aria-label="Remove image"><X size={14}/></button>
+            </div>)}
+            {images.length<5&&<button type="button" className="product-image-drop compact-drop" onClick={()=>inputRef.current?.click()}>
+              <ImagePlus size={25}/><strong>{images.length?'Add another photo':'Add product photos'}</strong><span>{images.length}/5 photos · PNG, JPG or WEBP</span>
+            </button>}
+          </div>
+          <input ref={inputRef} hidden multiple type="file" accept="image/png,image/jpeg,image/webp" onChange={(e:ChangeEvent<HTMLInputElement>)=>pickImages(e.target.files)}/>
         </div>
         <div className="form-grid product-form-grid">
           <label className="wide"><span>Product name</span><input name="name" required defaultValue={editingProduct?.name ?? ''} placeholder="e.g. Classic leather bag"/></label>
@@ -278,10 +291,6 @@ export function DashboardStorePage(){
   const update=(key:keyof StoreProfile,value:string)=>{
     setProfile(current=>{
       const next={...current,[key]:value} as StoreProfile
-      if(key==='businessName' && (current.slug==='myshop' || !current.slug)) {
-        next.slug=slugifyStoreName(value)
-        setSlugMessage(validateStoreSlug(next.slug,current.slug))
-      }
       if(key==='slug') setSlugMessage(validateStoreSlug(String(value),current.slug))
       return next
     })
@@ -341,9 +350,12 @@ export function DashboardStorePage(){
           <label className="wide"><span>Business name</span><input value={profile.businessName} onChange={e=>update('businessName',e.target.value)} placeholder="Your business name"/></label>
           <label><span>Category</span><select value={profile.category} onChange={e=>update('category',e.target.value)}><option value="">Select category</option>{BUSINESS_CATEGORIES.map(item=><option key={item} value={item}>{item}</option>)}</select></label>
           <label><span>Location</span><input value={profile.location} onChange={e=>update('location',e.target.value)} placeholder="Town, city or area"/></label>
-          <label className="wide premium-link-field"><span>Shop link</span><div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" spellCheck={false} placeholder="yourshop"/></div><small className={slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Choose a clean shop link using only letters and numbers.</small></label>
+          <label className="wide premium-link-field"><span>Shop link</span><div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="yourshop"/></div><small className={slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Choose a clean shop link using only letters and numbers.</small></label>
           <label className="wide"><span>Description</span><textarea value={profile.description} onChange={e=>update('description',e.target.value)} placeholder="Describe your business"/></label>
           <label className="wide"><span>WhatsApp</span><input value={profile.whatsapp} onChange={e=>update('whatsapp',e.target.value)} placeholder="+256..."/></label>
+          <label><span>Mobile Money network</span><select value={profile.paymentNetwork} onChange={e=>update('paymentNetwork',e.target.value as PaymentNetwork)}><option value="">Select network</option><option value="MTN MoMo">MTN MoMo</option><option value="Airtel Money">Airtel Money</option></select></label>
+          <label><span>Mobile Money number</span><input value={profile.paymentNumber} onChange={e=>update('paymentNumber',e.target.value)} inputMode="tel" placeholder="e.g. 0772 123 456"/></label>
+          <label className="wide payment-note"><small>Customers will see this number only at checkout. Gulako opens the Mobile Money menu; the customer confirms payment on their phone.</small></label>
           <label className="wide"><span>Google Maps / Plus Code</span><input value={profile.mapsLink} onChange={e=>update('mapsLink',e.target.value)} placeholder="Paste link or code"/></label>
           <label><span>TikTok</span><input value={profile.tiktok} onChange={e=>update('tiktok',e.target.value)} placeholder="@yourbusiness"/></label>
           <label><span>Instagram</span><input value={profile.instagram} onChange={e=>update('instagram',e.target.value)} placeholder="@yourbusiness"/></label>

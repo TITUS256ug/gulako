@@ -1,7 +1,7 @@
 import { Camera, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { getShopLogo, saveShopLogo } from '../lib/shopBrand'
-import { getStoreProfile, saveStoreProfile, uploadSellerAsset } from '../lib/storeData'
+import { getStoreProfile, saveStoreProfile, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
 
 export function ShopLogoUpload({ compact = false }: { compact?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -34,7 +34,7 @@ export function ShopLogoUpload({ compact = false }: { compact?: boolean }) {
       saveShopLogo(value)
       setLogo(value)
       const profile=getStoreProfile()
-      if(profile.businessName) await saveStoreProfile(profile)
+      if(profile.businessName && validateStoreSlug(profile.slug).valid) await saveStoreProfile(profile)
       setError('')
     }catch(err){
       setError(err instanceof Error?err.message:'Could not upload logo.')

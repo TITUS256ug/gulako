@@ -1,12 +1,12 @@
-import { ExternalLink, Instagram, Link2, Map, MapPin, MessageCircle, Search, ShoppingBag, Store } from 'lucide-react'
+import { ArrowUpRight, ExternalLink, Instagram, Link2, Map, MapPin, MessageCircle, Search, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, CSSProperties } from 'react'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { ProductCard } from '../components/ProductCard'
 import type { Product } from '../data/mock'
-import { accentColors, fetchPublicShop, recordStoreView } from '../lib/storeData'
-import type { StoreProfile } from '../lib/storeData'
+import { accentColors, fetchPublicShop, fetchRelatedShops, recordStoreView } from '../lib/storeData'
+import type { RelatedShop, StoreProfile } from '../lib/storeData'
 
 type PublicShopData={
   profile:StoreProfile
@@ -17,6 +17,7 @@ type PublicShopData={
 
 export function ShopPage({ slug }: { slug?: string }) {
   const [shop,setShop]=useState<PublicShopData|null>(null)
+  const [related,setRelated]=useState<RelatedShop[]>([])
   const [ready,setReady]=useState(false)
   const [query,setQuery]=useState('')
   const [category,setCategory]=useState('All products')
@@ -24,11 +25,15 @@ export function ShopPage({ slug }: { slug?: string }) {
   useEffect(()=>{
     let active=true
     if(!slug){setReady(true);return}
-    fetchPublicShop(slug).then(data=>{
+    fetchPublicShop(slug).then(async data=>{
       if(!active)return
       setShop(data)
       setReady(true)
-      if(data)void recordStoreView(slug)
+      if(data){
+        void recordStoreView(slug)
+        const suggestions=await fetchRelatedShops(data.profile.category,slug,3)
+        if(active)setRelated(suggestions)
+      }
     })
     return()=>{active=false}
   },[slug])
@@ -79,38 +84,62 @@ export function ShopPage({ slug }: { slug?: string }) {
   const instagramUrl=profile.instagram?'https://instagram.com/'+profile.instagram.replace(/^@/,''):''
   const style={ '--shop-accent': accent } as CSSProperties
 
-  return <div className="app-shell customer-storefront" style={style}>
+  return <div className="app-shell customer-storefront premium-shop-page" style={style}>
     <Header compact onSearch={setQuery}/>
     <main>
       <div className="page-container">
-        <div className="context-strip"><Store size={16}/> Independent storefront on Gulako</div>
-        <section className="shop-hero-v2 live-shop-hero">
-          <div className="shop-hero-content">
-            {logo?<img className="shop-avatar shop-avatar-image" src={logo} alt={profile.businessName}/>:<div className="shop-avatar">{profile.businessName.slice(0,1).toUpperCase()}</div>}
+        <section className={profile.cover?'premium-shop-hero has-cover':'premium-shop-hero'} style={profile.cover?{backgroundImage:`linear-gradient(90deg,rgba(20,12,35,.86),rgba(20,12,35,.55)),url("${profile.cover}")`}:undefined}>
+          <div className="premium-shop-hero-copy">
+            <div className="premium-shop-logo-wrap">
+              {logo?<img className="premium-shop-logo" src={logo} alt={profile.businessName}/>:<div className="premium-shop-logo fallback">{profile.businessName.slice(0,1).toUpperCase()}</div>}
+            </div>
             <div>
-              <p className="eyebrow">Welcome to our shop</p>
+              <span className="premium-shop-eyebrow"><Sparkles size={14}/> Welcome to {profile.businessName}</span>
               <h1>{profile.businessName}</h1>
-              {profile.description&&<p className="hero-description">{profile.description}</p>}
-              <div className="shop-meta-actions">
-                {profile.location&&<span className="shop-location"><MapPin size={18}/>{profile.location}</span>}
-                {profile.mapsLink&&<a href={profile.mapsLink} target="_blank" rel="noreferrer"><Map size={18}/> Directions <ExternalLink size={13}/></a>}
-                {whatsapp&&<a href={'https://wa.me/'+whatsapp} target="_blank" rel="noreferrer"><MessageCircle size={18}/> WhatsApp</a>}
-                {instagramUrl&&<a href={instagramUrl} target="_blank" rel="noreferrer"><Instagram size={18}/> Instagram</a>}
+              {profile.description&&<p>{profile.description}</p>}
+              <div className="premium-shop-meta">
+                {profile.category&&<span><Store size={16}/>{profile.category}</span>}
+                {profile.location&&<span><MapPin size={16}/>{profile.location}</span>}
+                {profile.deliveryInfo&&<span><Truck size={16}/>Delivery available</span>}
               </div>
             </div>
           </div>
-          <button className="share-button" onClick={shareShop}><Link2 size={18}/> Share shop</button>
-          {profile.cover&&<div className="shop-hero-image"><img src={profile.cover} alt="Shop cover"/></div>}
+
+          <div className="premium-shop-actions">
+            <button className="premium-share" onClick={shareShop}><Link2 size={17}/> Share shop</button>
+            {whatsapp&&<a href={'https://wa.me/'+whatsapp} target="_blank" rel="noreferrer"><MessageCircle size={17}/> WhatsApp</a>}
+            {profile.mapsLink&&<a href={profile.mapsLink} target="_blank" rel="noreferrer"><Map size={17}/> Directions <ExternalLink size={12}/></a>}
+            {instagramUrl&&<a href={instagramUrl} target="_blank" rel="noreferrer"><Instagram size={17}/> Instagram</a>}
+          </div>
         </section>
 
-        <section className="catalog-section">
-          <div className="catalog-heading-row">
-            <div><div className="title-with-count"><h2>Products</h2><span className="count-pill">{visibleProducts.length}</span></div><p>Order directly from this shop.</p></div>
-            <label className="catalog-search"><Search size={18}/><input placeholder="Search products..." value={query} onChange={(e:ChangeEvent<HTMLInputElement>)=>setQuery(e.target.value)}/></label>
+        <section className="premium-catalog-shell">
+          <div className="catalog-heading-row premium-catalog-head">
+            <div>
+              <span className="section-kicker">Shop collection</span>
+              <div className="title-with-count"><h2>Products</h2><span className="count-pill">{visibleProducts.length}</span></div>
+              <p>Browse and order directly from {profile.businessName}.</p>
+            </div>
+            <label className="catalog-search premium-shop-search"><Search size={18}/><input placeholder={'Search '+profile.businessName+'...'} value={query} onChange={(e:ChangeEvent<HTMLInputElement>)=>setQuery(e.target.value)}/></label>
           </div>
-          {categories.length>1&&<div className="category-tabs">{categories.map(item=><button className={item===category?'category-tab active':'category-tab'} key={item} onClick={()=>setCategory(item)}>{item}</button>)}</div>}
-          {visibleProducts.length?<div className="product-grid">{visibleProducts.map(item=><ProductCard product={item} key={item.id}/>)}</div>:<div className="empty-state storefront-products-empty"><ShoppingBag size={26}/><h3>No products yet</h3><p>This seller has not published products yet.</p></div>}
+
+          {categories.length>1&&<div className="category-tabs premium-category-tabs">{categories.map(item=><button className={item===category?'category-tab active':'category-tab'} key={item} onClick={()=>setCategory(item)}>{item}</button>)}</div>}
+
+          {visibleProducts.length?<div className="product-grid premium-product-grid">{visibleProducts.map(item=><ProductCard product={item} key={item.id}/>)}</div>:<div className="empty-state storefront-products-empty"><ShoppingBag size={26}/><h3>No products found</h3><p>Try another search or category.</p></div>}
         </section>
+
+        {related.length>0&&<section className="related-shops-section">
+          <div className="related-shops-head"><div><span className="section-kicker">More to discover</span><h2>Related shops</h2><p>More Gulako shops in {profile.category}.</p></div></div>
+          <div className="related-shop-grid">
+            {related.map(item=><a className="related-shop-card" href={'/'+item.slug} key={item.slug}>
+              <div className="related-shop-mark" style={{background:accentColors[item.accent]}}>
+                {item.logo?<img src={item.logo} alt={item.businessName}/>:item.businessName.slice(0,1).toUpperCase()}
+              </div>
+              <div><small>{item.category}</small><strong>{item.businessName}</strong>{item.location&&<span><MapPin size={13}/>{item.location}</span>}</div>
+              <ArrowUpRight size={18}/>
+            </a>)}
+          </div>
+        </section>}
       </div>
     </main>
     <Footer/>

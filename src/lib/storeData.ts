@@ -3,6 +3,7 @@ import { backend } from './backend'
 import { getShopLogo } from './shopBrand'
 
 export type AccentName = 'violet' | 'indigo' | 'rose' | 'amber' | 'teal'
+export type PaymentNetwork = '' | 'MTN MoMo' | 'Airtel Money'
 
 export type StoreProfile = {
   businessName: string
@@ -15,8 +16,20 @@ export type StoreProfile = {
   tiktok: string
   instagram: string
   deliveryInfo: string
+  paymentNetwork: PaymentNetwork
+  paymentNumber: string
   accent: AccentName
   cover: string
+}
+
+export type RelatedShop = {
+  businessName: string
+  slug: string
+  category: string
+  location: string
+  description: string
+  logo: string
+  accent: AccentName
 }
 
 const PROFILE_KEY = 'gulako_store_profile'
@@ -38,8 +51,9 @@ const RESERVED_SLUGS = new Set([
 ])
 
 export const emptyStoreProfile: StoreProfile = {
-  businessName:'', slug:'myshop', category:'', location:'', description:'', whatsapp:'',
-  mapsLink:'', tiktok:'', instagram:'', deliveryInfo:'', accent:'violet', cover:'',
+  businessName:'', slug:'', category:'', location:'', description:'', whatsapp:'',
+  mapsLink:'', tiktok:'', instagram:'', deliveryInfo:'', paymentNetwork:'', paymentNumber:'',
+  accent:'violet', cover:'',
 }
 
 function safeParse<T>(key:string,fallback:T):T{
@@ -81,11 +95,12 @@ function ensureCacheOwner(ownerId:string){
 }
 
 export function slugifyStoreName(value:string){
-  return value.toLowerCase().trim().replace(/[^a-z0-9]/g,'').slice(0,40)||'myshop'
+  return value.toLowerCase().trim().replace(/[^a-z0-9]/g,'').slice(0,40)
 }
 
 export function validateStoreSlug(value:string,currentSlug?:string){
   const slug=slugifyStoreName(value)
+  if(!slug)return{valid:false,slug,message:'Enter your shop link.'}
   if(slug.length<3)return{valid:false,slug,message:'Use at least 3 letters or numbers.'}
   if(RESERVED_SLUGS.has(slug))return{valid:false,slug,message:'This shop link is reserved. Try another one.'}
   if(currentSlug===slug)return{valid:true,slug,message:'Shop link available.'}
@@ -121,7 +136,7 @@ export function getStoreViews(){
 function rowToProfile(row:any):StoreProfile{
   return{
     businessName:row.business_name??'',
-    slug:row.slug??'myshop',
+    slug:row.slug??'',
     category:row.category??'',
     location:row.location??'',
     description:row.description??'',
@@ -130,12 +145,16 @@ function rowToProfile(row:any):StoreProfile{
     tiktok:row.tiktok??'',
     instagram:row.instagram??'',
     deliveryInfo:row.delivery_info??'',
+    paymentNetwork:(row.payment_network??'') as PaymentNetwork,
+    paymentNumber:row.payment_number??'',
     accent:(row.accent??'violet') as AccentName,
     cover:row.cover_url??'',
   }
 }
 
 function rowToProduct(row:any,shopName:string,shopSlug:string):Product{
+  const images=Array.isArray(row.product_images) ? row.product_images.filter(Boolean) : []
+  const image=images[0] || row.image_url || ''
   return{
     id:row.id,
     shopSlug,
@@ -144,7 +163,8 @@ function rowToProduct(row:any,shopName:string,shopSlug:string):Product{
     category:row.category,
     price:Number(row.price),
     currency:row.currency??'UGX',
-    image:row.image_url??'',
+    image,
+    images:images.length?images:(image?[image]:[]),
     description:row.description??'',
     stock:Number(row.stock??0),
     negotiable:Boolean(row.negotiable),
@@ -192,10 +212,12 @@ export async function saveStoreProfile(profile:StoreProfile){
     tiktok:profile.tiktok,
     instagram:profile.instagram,
     delivery_info:profile.deliveryInfo,
+    payment_network:profile.paymentNetwork,
+    payment_number:profile.paymentNumber,
     accent:profile.accent,
     logo_url:getShopLogo(),
     cover_url:profile.cover,
-    published:Boolean(profile.businessName&&profile.slug),
+    published:Boolean(profile.businessName&&validateStoreSlug(profile.slug).valid),
     updated_at:new Date().toISOString(),
   }
   const {error}=await backend.from('shops').upsert(row,{onConflict:'owner_id'})
@@ -220,7 +242,8 @@ async function getRemoteShopId(){
 export function addSellerProduct(product:Omit<Product,'id'>){
   const products=getSellerProducts()
   const id=crypto.randomUUID()
-  const next=[{...product,id},...products]
+  const images=(product.images?.length?product.images:(product.image?[product.image]:[])).slice(0,5)
+  const next=[{...product,id,image:images[0]??'',images},...products]
   cacheProducts(next)
   void (async()=>{
     const {data:{user}}=await backend.auth.getUser()
@@ -228,7 +251,7 @@ export function addSellerProduct(product:Omit<Product,'id'>){
     if(!user||!shopId)return
     const {error}=await backend.from('products').insert({
       id,shop_id:shopId,owner_id:user.id,name:product.name,category:product.category,
-      price:product.price,currency:product.currency,image_url:product.image,
+      price:product.price,currency:product.currency,image_url:images[0]??'',product_images:images,
       description:product.description,stock:product.stock,negotiable:Boolean(product.negotiable),active:true,
     })
     if(error)window.dispatchEvent(new CustomEvent('gulako-products-error',{detail:error.message}))
@@ -237,10 +260,14 @@ export function addSellerProduct(product:Omit<Product,'id'>){
 }
 
 export function updateSellerProduct(id:string,updates:Partial<Omit<Product,'id'>>){
-  cacheProducts(getSellerProducts().map(product=>product.id===id?{...product,...updates,id}:product))
+  const images=(updates.images?.length?updates.images:(updates.image?[updates.image]:undefined))?.slice(0,5)
+  cacheProducts(getSellerProducts().map(product=>product.id===id?{
+    ...product,...updates,id,
+    ...(images?{images,image:images[0]??''}:{}),
+  }:product))
   void backend.from('products').update({
     name:updates.name,category:updates.category,price:updates.price,currency:updates.currency,
-    image_url:updates.image,description:updates.description,stock:updates.stock,
+    image_url:images?.[0]??updates.image,product_images:images,description:updates.description,stock:updates.stock,
     negotiable:updates.negotiable,updated_at:new Date().toISOString(),
   }).eq('id',id)
 }
@@ -249,7 +276,8 @@ export function duplicateSellerProduct(id:string){
   const source=getSellerProducts().find(product=>product.id===id)
   if(!source)return null
   const copyId=crypto.randomUUID()
-  const copy:Product={...source,id:copyId,name:`${source.name} copy`}
+  const images=(source.images?.length?source.images:(source.image?[source.image]:[])).slice(0,5)
+  const copy:Product={...source,id:copyId,name:`${source.name} copy`,images,image:images[0]??''}
   cacheProducts([copy,...getSellerProducts()])
   void (async()=>{
     const {data:{user}}=await backend.auth.getUser()
@@ -257,8 +285,8 @@ export function duplicateSellerProduct(id:string){
     if(!user||!shopId)return
     await backend.from('products').insert({
       id:copyId,shop_id:shopId,owner_id:user.id,name:copy.name,category:copy.category,
-      price:copy.price,currency:copy.currency,image_url:copy.image,description:copy.description,
-      stock:copy.stock,negotiable:Boolean(copy.negotiable),active:true,
+      price:copy.price,currency:copy.currency,image_url:copy.image,product_images:images,
+      description:copy.description,stock:copy.stock,negotiable:Boolean(copy.negotiable),active:true,
     })
   })()
   return copyId
@@ -301,6 +329,26 @@ export async function fetchPublicShop(slug:string){
     views:Number(shop.views??40),
     products:(rows??[]).map((row:any)=>rowToProduct(row,profile.businessName,profile.slug)),
   }
+}
+
+export async function fetchRelatedShops(category:string,currentSlug:string,limit=3):Promise<RelatedShop[]>{
+  if(!category)return[]
+  const {data,error}=await backend.from('shops')
+    .select('business_name,slug,category,location,description,logo_url,accent')
+    .eq('published',true)
+    .eq('category',category)
+    .neq('slug',currentSlug)
+    .limit(12)
+  if(error||!data)return[]
+  return [...data].sort(()=>Math.random()-.5).slice(0,limit).map((row:any)=>({
+    businessName:row.business_name??'Shop',
+    slug:row.slug,
+    category:row.category??'',
+    location:row.location??'',
+    description:row.description??'',
+    logo:row.logo_url??'',
+    accent:(row.accent??'violet') as AccentName,
+  }))
 }
 
 export async function fetchPublicProduct(id:string){

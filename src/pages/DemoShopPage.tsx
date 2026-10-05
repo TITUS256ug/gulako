@@ -21,8 +21,8 @@ export function DemoShopPage() {
     <Header compact/>
     <main><div className="page-container">
       <section className="demo-shop-hero">
-        <div><span className="section-kicker"><Sparkles size={14}/> Demo shop</span><h1>Gulako Demo Store</h1><p>See a complete sample storefront before you create your own.</p></div>
-        <div className="demo-shop-badge">10 demo products</div>
+        <div><span className="section-kicker"><Sparkles size={14}/> Demo shop</span><h1>Welcome to Gulako Demo Store</h1><p>This is a sample customer storefront. Use it to preview how a polished Gulako shop can feel before you publish your own.</p></div>
+        <div className="demo-shop-badge">Demo experience · 10 products</div>
       </section>
       <section className="catalog-section">
         <div className="catalog-heading-row"><div><div className="title-with-count"><h2>Demo products</h2><span className="count-pill">10</span></div><p>Preview only — these sample products are not for sale.</p></div></div>
