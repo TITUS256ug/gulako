@@ -37,7 +37,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
         password,
         options:{
           data:{full_name:fullName},
-          emailRedirectTo:window.location.origin+'/dashboard',
+          emailRedirectTo:window.location.origin+'/auth/callback',
         },
       })
       if(error){setError(authErrorMessage(error.message));setBusy(false);return}
@@ -65,7 +65,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
     const chosen=provider==='google'?'google':'custom:tiktok'
     const {error}=await backend.auth.signInWithOAuth({
       provider:chosen as never,
-      options:{redirectTo:window.location.origin+'/dashboard'},
+      options:{redirectTo:window.location.origin+'/auth/callback'},
     })
     if(error)setError(provider==='tiktok'?'TikTok sign-in will activate after provider credentials are connected.':error.message)
   }
@@ -76,7 +76,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
     const {error}=await backend.auth.resend({
       type:'signup',
       email:pendingEmail,
-      options:{emailRedirectTo:window.location.origin+'/dashboard'},
+      options:{emailRedirectTo:window.location.origin+'/auth/callback'},
     })
     if(error)setError(authErrorMessage(error.message))
     else setMessage('Verification email sent again.')
