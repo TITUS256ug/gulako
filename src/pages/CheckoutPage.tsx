@@ -1,10 +1,10 @@
-import { ArrowLeft, Check, Copy, MessageCircle, Phone, ShieldCheck, ShoppingBag, Smartphone } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Phone, ShieldCheck, ShoppingBag, Smartphone } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
-import { cartDetails } from '../lib/cart'
+import { cartDetails, getCart, saveCart } from '../lib/cart'
+import { placePublicOrder } from '../lib/orders'
 import { fetchPublicShop } from '../lib/storeData'
-import { orderWhatsappMessage, whatsappUrl } from '../lib/whatsapp'
 import type { StoreProfile } from '../lib/storeData'
 
 type ShopPayment = {
@@ -12,10 +12,22 @@ type ShopPayment = {
   profile:StoreProfile
 }
 
+type BuyerDetails={
+  name:string
+  phone:string
+  location:string
+  note:string
+}
+
 export function CheckoutPage() {
   const lines = cartDetails()
   const [shops,setShops]=useState<Record<string,ShopPayment>>({})
   const [copied,setCopied]=useState('')
+  const [buyer,setBuyer]=useState<BuyerDetails>({name:'',phone:'+256',location:'',note:''})
+  const [methods,setMethods]=useState<Record<string,'mtn'|'airtel'|'other'>>({})
+  const [references,setReferences]=useState<Record<string,string>>({})
+  const [placing,setPlacing]=useState('')
+  const [error,setError]=useState('')
 
   const groups=useMemo(()=>{
     const map=new Map<string,typeof lines>()
@@ -36,8 +48,14 @@ export function CheckoutPage() {
     })).then(results=>{
       if(!active)return
       const next:Record<string,ShopPayment>={}
-      for(const item of results)if(item)next[item.slug]=item
+      const defaults:Record<string,'mtn'|'airtel'|'other'>={}
+      for(const item of results){
+        if(!item)continue
+        next[item.slug]=item
+        defaults[item.slug]=item.profile.mtnMerchantCode?'mtn':item.profile.airtelMerchantCode?'airtel':'other'
+      }
       setShops(next)
+      setMethods(current=>({...defaults,...current}))
     })
     return()=>{active=false}
   },[groups.length])
@@ -55,6 +73,34 @@ export function CheckoutPage() {
     window.location.href='tel:'+encodeURIComponent(code)
   }
 
+  const place=async(slug:string,group:typeof lines)=>{
+    setError('')
+    if(!buyer.name.trim()){setError('Enter your name before placing the order.');return}
+    if(buyer.phone.replace(/\D/g,'').length<7){setError('Enter a valid phone or WhatsApp number.');return}
+    if(!buyer.location.trim()){setError('Enter your delivery or pickup location.');return}
+    if(slug==='demo'){setError('The demo shop is for testing the cart only. Open a real Gulako seller shop to place an order.');return}
+
+    setPlacing(slug)
+    try{
+      const result=await placePublicOrder({
+        shopSlug:slug,
+        customerName:buyer.name,
+        customerPhone:buyer.phone,
+        deliveryLocation:buyer.location,
+        note:buyer.note,
+        paymentMethod:methods[slug]??'other',
+        paymentReference:references[slug]??'',
+        items:group.map(line=>({productId:line.productId,quantity:line.quantity})),
+      })
+      const ids=new Set(group.map(line=>line.productId))
+      saveCart(getCart().filter(line=>!ids.has(line.productId)))
+      window.location.assign('/order/'+encodeURIComponent(result.publicRef))
+    }catch(err){
+      setError(err instanceof Error?err.message:'Could not place your order. Please try again.')
+      setPlacing('')
+    }
+  }
+
   if (!lines.length) {
     return <div className="app-shell"><Header/><main className="page-container checkout-page">
       <a className="back-link" href="/cart"><ArrowLeft size={17}/> Back to cart</a>
@@ -70,24 +116,35 @@ export function CheckoutPage() {
   return <div className="app-shell premium-checkout-page"><Header/><main className="page-container checkout-page">
     <a className="back-link" href="/cart"><ArrowLeft size={17}/> Back to cart</a>
     <div className="checkout-heading premium-checkout-heading">
-      <span className="section-kicker">Mobile Money checkout</span>
-      <h1>Complete your payment</h1>
-      <p>Pay each seller directly using their MTN MoMoPay or Airtel Money Pay merchant code. Gulako shows the exact code and amount, then opens the correct payment menu on your phone.</p>
+      <span className="section-kicker">Direct seller checkout</span>
+      <h1>Place your order</h1>
+      <p>Pay the seller directly, then create a Gulako order so the seller can confirm, process and update your delivery status.</p>
     </div>
+
+    <section className="checkout-customer-card">
+      <div><span className="section-kicker">Your details</span><h2>Where should the seller reach you?</h2><p>Your details are shared only with the seller handling this order.</p></div>
+      <div className="checkout-customer-grid">
+        <label><span>Name</span><input value={buyer.name} onChange={e=>setBuyer(current=>({...current,name:e.target.value}))} placeholder="Your name" autoComplete="name"/></label>
+        <label><span>Phone / WhatsApp</span><input value={buyer.phone} onChange={e=>setBuyer(current=>({...current,phone:e.target.value}))} placeholder="+256..." inputMode="tel" autoComplete="tel"/></label>
+        <label className="wide"><span>Delivery / pickup location</span><input value={buyer.location} onChange={e=>setBuyer(current=>({...current,location:e.target.value}))} placeholder="Area, landmark or pickup preference"/></label>
+        <label className="wide"><span>Order note (optional)</span><textarea value={buyer.note} onChange={e=>setBuyer(current=>({...current,note:e.target.value}))} placeholder="Size, colour, delivery instructions, etc."/></label>
+      </div>
+    </section>
+
+    {error&&<p className="checkout-error">{error}</p>}
 
     <div className="checkout-groups">
       {groups.map(([slug,group])=>{
         const payment=shops[slug]?.profile
         const subtotal=group.reduce((sum,line)=>sum+line.product.price*line.quantity,0)
-        const shopName=payment?.businessName||group[0].product.shopName
-        const whatsappHref=payment?.whatsapp ? whatsappUrl(payment.whatsapp,orderWhatsappMessage(group,shopName,slug)) : ''
         const mtnCode=payment?.mtnMerchantCode?.trim()??''
         const airtelCode=payment?.airtelMerchantCode?.trim()??''
         const fallbackNetwork=payment?.paymentNetwork??''
         const fallbackNumber=payment?.paymentNumber??''
+        const method=methods[slug]??(mtnCode?'mtn':airtelCode?'airtel':'other')
         return <section className="checkout-seller-card" key={slug}>
           <div className="checkout-seller-head">
-            <div><small>Paying</small><h2>{payment?.businessName||group[0].product.shopName}</h2><span>{group.reduce((sum,line)=>sum+line.quantity,0)} item{group.reduce((sum,line)=>sum+line.quantity,0)===1?'':'s'}</span></div>
+            <div><small>Ordering from</small><h2>{payment?.businessName||group[0].product.shopName}</h2><span>{group.reduce((sum,line)=>sum+line.quantity,0)} item{group.reduce((sum,line)=>sum+line.quantity,0)===1?'':'s'}</span></div>
             <strong>UGX {money(subtotal)}</strong>
           </div>
 
@@ -96,7 +153,7 @@ export function CheckoutPage() {
           </div>
 
           {mtnCode||airtelCode?<div className="merchant-payment-options">
-            <div className="merchant-payment-title"><div><strong>Choose how to pay</strong><span>Pay this seller directly using their verified business payment details.</span></div><b>UGX {money(subtotal)}</b></div>
+            <div className="merchant-payment-title"><div><strong>Choose how to pay</strong><span>Pay this seller directly, then place the order below.</span></div><b>UGX {money(subtotal)}</b></div>
             {mtnCode&&<div className="merchant-pay-card mtn-pay">
               <div className="merchant-pay-brand"><span><img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/MTN_2022_logo.svg" alt="MTN"/></span><div><small>MTN MoMoPay merchant code</small><strong>{mtnCode}</strong></div></div>
               <div className="merchant-pay-actions">
@@ -120,14 +177,20 @@ export function CheckoutPage() {
             <div className="momo-card-head"><span><Smartphone size={20}/></span><div><small>{fallbackNetwork}</small><strong>{fallbackNumber}</strong></div></div>
             <p className="legacy-payment-note">This seller has not added a merchant code yet. Use the number above only after confirming it with the seller.</p>
           </div>:<div className="momo-missing">
-            <Smartphone size={21}/><div><strong>Merchant payment details not added yet</strong><span>Contact the seller to arrange payment.</span></div>
+            <Smartphone size={21}/><div><strong>Merchant payment details not added yet</strong><span>You can still place the order and arrange payment with the seller.</span></div>
           </div>}
 
-          {whatsappHref&&<a className="soft-button full-width checkout-whatsapp premium-whatsapp-button" href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Confirm order on WhatsApp</a>}
+          <div className="order-payment-report">
+            <label><span>Payment method</span><select value={method} onChange={e=>setMethods(current=>({...current,[slug]:e.target.value as 'mtn'|'airtel'|'other'}))}>{mtnCode&&<option value="mtn">MTN MoMo</option>}{airtelCode&&<option value="airtel">Airtel Money</option>}<option value="other">Arrange with seller</option></select></label>
+            <label><span>Transaction ID / reference (optional)</span><input value={references[slug]??''} onChange={e=>setReferences(current=>({...current,[slug]:e.target.value}))} placeholder="Enter after payment if available"/></label>
+          </div>
+
+          <button className="primary-button large full-width place-order-button" disabled={placing===slug} onClick={()=>void place(slug,group)}>{placing===slug?'Creating order…':'Place order'}</button>
+          <small className="checkout-order-note">After placing the order you’ll get a tracking page and can message the seller directly.</small>
         </section>
       })}
     </div>
 
-    <p className="checkout-footnote">For now, Gulako facilitates direct seller payments. Automated payment confirmation will be added when a payment provider is connected.</p>
+    <p className="checkout-footnote">Gulako records the order and status, but the customer pays the seller directly. Automated payment confirmation will be added when a payment provider is connected.</p>
   </main><Footer/></div>
 }

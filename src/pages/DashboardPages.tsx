@@ -8,6 +8,8 @@ import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
 import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, applyStoreBrand, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreAccent, getStoreProfile, getStoreViews, hydrateSellerData, normalizeWhatsapp, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
 import type { AccentName, StoreProfile } from '../lib/storeData'
+import { fetchSellerOrders, formatOrderStatus, updateOrderPaymentStatus, updateSellerOrderStatus } from '../lib/orders'
+import type { OrderStatus, SellerOrder } from '../lib/orders'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
 
@@ -55,6 +57,38 @@ function useStoreSnapshot(){
   return {profile,products,logo,views}
 }
 
+
+function useSellerOrdersSnapshot(){
+  const [orders,setOrders]=useState<SellerOrder[]>([])
+  const [loading,setLoading]=useState(true)
+  const [error,setError]=useState('')
+
+  const refresh=async()=>{
+    try{
+      const next=await fetchSellerOrders()
+      setOrders(next)
+      setError('')
+    }catch(err){
+      setError(err instanceof Error?err.message:'Could not load orders.')
+    }finally{
+      setLoading(false)
+    }
+  }
+
+  useEffect(()=>{
+    void refresh()
+    const handler=()=>void refresh()
+    window.addEventListener('gulako-orders',handler)
+    const timer=window.setInterval(handler,30000)
+    return()=>{
+      window.removeEventListener('gulako-orders',handler)
+      window.clearInterval(timer)
+    }
+  },[])
+
+  return{orders,loading,error,refresh}
+}
+
 function StoreHealth({profile,productCount,logo}:{profile:StoreProfile;productCount:number;logo:string}){
   const profileDone = Boolean(profile.businessName && profile.category && profile.location && profile.description && profile.whatsapp)
   const deliveryDone = Boolean(profile.deliveryInfo)
@@ -93,9 +127,13 @@ function StoreHealth({profile,productCount,logo}:{profile:StoreProfile;productCo
 export function DashboardHomePage(){
   const {profile,products,logo,views}=useStoreSnapshot()
   const {plan,limit}=useAccountPlan()
+  const {orders,loading}=useSellerOrdersSnapshot()
   const count=products.length
   const usage=limit?Math.min(100,(count/limit)*100):100
   const planLabel=plan.charAt(0).toUpperCase()+plan.slice(1)
+  const completed=orders.filter(order=>order.status==='completed')
+  const sales=completed.reduce((sum,order)=>sum+order.total,0)
+  const customers=new Set(orders.map(order=>order.customerPhone.replace(/\D/g,'')).filter(Boolean)).size
 
   return <DashboardShell title="Overview" subtitle="A quick look at your shop today." action={<a className="primary-button" href="/dashboard/products?add=1"><Plus size={17}/>Add product</a>}>
     <section className="dashboard-welcome">
@@ -107,21 +145,28 @@ export function DashboardHomePage(){
       <div className="plan-usage">
         <div className="plan-usage-row"><span>Product capacity</span><strong>{limit?`${count} / ${limit}`:`${count} / Unlimited`}</strong></div>
         <div className="plan-progress"><span style={{width:`${usage}%`}}/></div>
-        <a href="/dashboard/settings">View plans <ArrowUpRight size={14}/></a>
+        <a href="/dashboard/billing">View plan & billing <ArrowUpRight size={14}/></a>
       </div>
     </section>
 
     <section className="metric-grid premium-metrics">
-      <article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>0</strong><em>No data yet</em></div></article>
-      <article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Sales</small><strong>UGX 0</strong><em>No data yet</em></div></article>
+      <article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>{orders.length}</strong><em>{orders.length?'Live order data':'No orders yet'}</em></div></article>
+      <article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Completed sales</small><strong>UGX {money(sales)}</strong><em>{completed.length} completed</em></div></article>
       <article><span className="metric-icon"><Eye size={20}/></span><div><small>Shop views</small><strong>{views}</strong><em>Total storefront visits</em></div></article>
-      <article><span className="metric-icon"><Users size={20}/></span><div><small>Customers</small><strong>0</strong><em>No data yet</em></div></article>
+      <article><span className="metric-icon"><Users size={20}/></span><div><small>Customers</small><strong>{customers}</strong><em>From real orders</em></div></article>
     </section>
 
     <div className="dashboard-two-col">
       <section className="dash-card premium-card">
-        <div className="dash-card-head"><div><h2>Recent orders</h2><p>New orders will appear here.</p></div><a href="/dashboard/orders">View orders</a></div>
-        <div className="dashboard-empty-mini"><ShoppingBag size={22}/><strong>No orders yet</strong><span>Share your shop link to start selling.</span></div>
+        <div className="dash-card-head"><div><h2>Recent orders</h2><p>Your newest customer orders.</p></div><a href="/dashboard/orders">View orders</a></div>
+        {loading?<div className="dashboard-empty-mini"><span className="save-spinner"/><strong>Loading orders…</strong></div>:orders.length?<div className="order-table launch-order-table">
+          {orders.slice(0,4).map(order=><a className="order-row" href="/dashboard/orders" key={order.id}>
+            <div><strong>{order.publicRef}</strong><small>{order.customerName} · {order.items.length} item{order.items.length===1?'':'s'}</small></div>
+            <span>UGX {money(order.total)}</span>
+            <span className={'status-pill '+order.status}>{formatOrderStatus(order.status)}</span>
+            <small>{new Date(order.createdAt).toLocaleDateString()}</small>
+          </a>)}
+        </div>:<div className="dashboard-empty-mini"><ShoppingBag size={22}/><strong>No orders yet</strong><span>Share your shop link to start selling.</span></div>}
       </section>
       <StoreHealth profile={profile} productCount={count} logo={logo}/>
     </div>
@@ -246,28 +291,120 @@ export function DashboardProductsPage(){
 }
 
 export function DashboardOrdersPage(){
-  return <DashboardShell title="Orders" subtitle="Track and manage customer orders.">
+  const {orders,loading,error,refresh}=useSellerOrdersSnapshot()
+  const [filter,setFilter]=useState<'all'|OrderStatus>('all')
+  const [saving,setSaving]=useState<string|null>(null)
+  const filters:Array<{key:'all'|OrderStatus;label:string}>=[
+    {key:'all',label:'All'},{key:'new',label:'New'},{key:'confirmed',label:'Confirmed'},
+    {key:'processing',label:'Processing'},{key:'delivering',label:'Delivering'},
+    {key:'completed',label:'Completed'},{key:'cancelled',label:'Cancelled'},
+  ]
+  const visible=filter==='all'?orders:orders.filter(order=>order.status===filter)
+
+  const changeStatus=async(order:SellerOrder,status:OrderStatus)=>{
+    setSaving(order.id)
+    try{await updateSellerOrderStatus(order.id,status);await refresh()}
+    finally{setSaving(null)}
+  }
+
+  const confirmPayment=async(order:SellerOrder)=>{
+    setSaving(order.id)
+    try{await updateOrderPaymentStatus(order.id,'confirmed');await refresh()}
+    finally{setSaving(null)}
+  }
+
+  return <DashboardShell title="Orders" subtitle="Track, contact customers and move orders through fulfilment.">
     <section className="dash-card premium-card">
-      <div className="dashboard-tabs"><button className="active">All <span>0</span></button><button>New <span>0</span></button><button>Confirmed</button><button>Delivering</button><button>Completed</button></div>
-      <div className="dashboard-empty-large"><ShoppingBag size={28}/><h3>No orders yet</h3><p>Orders will appear here when customers buy from your storefront.</p></div>
+      <div className="dashboard-tabs order-filter-tabs">
+        {filters.map(item=><button key={item.key} className={filter===item.key?'active':''} onClick={()=>setFilter(item.key)}>{item.label} <span>{item.key==='all'?orders.length:orders.filter(order=>order.status===item.key).length}</span></button>)}
+      </div>
+      {error&&<p className="form-error">{error}</p>}
+      {loading?<div className="dashboard-empty-large"><span className="save-spinner"/><h3>Loading orders…</h3></div>:visible.length?<div className="seller-order-list">
+        {visible.map(order=>{
+          const digits=order.customerPhone.replace(/\D/g,'')
+          return <article className="seller-order-card" key={order.id}>
+            <div className="seller-order-head">
+              <div><span className={'status-pill '+order.status}>{formatOrderStatus(order.status)}</span><strong>{order.publicRef}</strong><small>{new Date(order.createdAt).toLocaleString()}</small></div>
+              <strong>UGX {money(order.total)}</strong>
+            </div>
+            <div className="seller-order-customer">
+              <div><small>Customer</small><strong>{order.customerName}</strong><span>{order.customerPhone}{order.deliveryLocation?` · ${order.deliveryLocation}`:''}</span></div>
+              <div><small>Payment</small><strong>{order.paymentMethod==='mtn'?'MTN MoMo':order.paymentMethod==='airtel'?'Airtel Money':'Arrange with seller'}</strong><span>{order.paymentReference?`Ref: ${order.paymentReference}`:'No transaction reference'} · {order.paymentStatus}</span></div>
+            </div>
+            <div className="seller-order-items">
+              {order.items.map(item=><div key={item.id}>{item.imageUrl?<img src={item.imageUrl} alt=""/>:<span/>}<div><strong>{item.productName}</strong><small>{item.quantity} × UGX {money(item.unitPrice)}</small></div><b>UGX {money(item.lineTotal)}</b></div>)}
+            </div>
+            {order.customerNote&&<p className="seller-order-note"><strong>Customer note:</strong> {order.customerNote}</p>}
+            <div className="seller-order-actions">
+              {digits&&<a className="soft-button" href={'https://wa.me/'+digits+'?text='+encodeURIComponent('Hello '+order.customerName+', I am contacting you about your Gulako order '+order.publicRef+'.')} target="_blank" rel="noreferrer"><MessageCircle size={16}/> WhatsApp customer</a>}
+              <label className="order-status-control"><span>Status</span><select value={order.status} disabled={saving===order.id} onChange={e=>void changeStatus(order,e.target.value as OrderStatus)}><option value="new">New</option><option value="confirmed">Confirmed</option><option value="processing">Processing</option><option value="delivering">Delivering</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
+              {order.paymentStatus!=='confirmed'&&<button className="soft-button order-payment-button" disabled={saving===order.id} onClick={()=>void confirmPayment(order)}><CheckCircle2 size={16}/> Confirm payment</button>}
+              <a className="text-button order-track-link" href={'/order/'+encodeURIComponent(order.publicRef)} target="_blank" rel="noreferrer">Customer view <ArrowUpRight size={14}/></a>
+            </div>
+          </article>
+        })}
+      </div>:<div className="dashboard-empty-large"><ShoppingBag size={28}/><h3>{filter==='all'?'No orders yet':'No '+filter+' orders'}</h3><p>{filter==='all'?'Orders will appear here when customers place them from your storefront.':'Try another order filter.'}</p></div>}
     </section>
   </DashboardShell>
 }
 
 export function DashboardCustomersPage(){
+  const {orders,loading}=useSellerOrdersSnapshot()
+  const [query,setQuery]=useState('')
+  const customers=Array.from(orders.reduce((map,order)=>{
+    const key=order.customerPhone.replace(/\D/g,'')||order.customerName.toLowerCase()
+    const current=map.get(key)??{key,name:order.customerName,phone:order.customerPhone,orders:0,total:0,lastAt:order.createdAt}
+    current.orders+=1
+    if(order.status==='completed')current.total+=order.total
+    if(new Date(order.createdAt)>new Date(current.lastAt)){current.lastAt=order.createdAt;current.name=order.customerName;current.phone=order.customerPhone}
+    map.set(key,current)
+    return map
+  },new Map<string,{key:string;name:string;phone:string;orders:number;total:number;lastAt:string}>()).values()).sort((a,b)=>new Date(b.lastAt).getTime()-new Date(a.lastAt).getTime())
+  const shown=customers.filter(customer=>(customer.name+' '+customer.phone).toLowerCase().includes(query.toLowerCase()))
+
   return <DashboardShell title="Customers" subtitle="People who have ordered from your shop.">
     <section className="dash-card premium-card">
-      <div className="product-toolbar"><label className="dashboard-search"><Search size={17}/><input placeholder="Search customers"/></label><span>0 customers</span></div>
-      <div className="dashboard-empty-large"><Users size={28}/><h3>No customers yet</h3><p>Your customer list will build automatically from orders.</p></div>
+      <div className="product-toolbar"><label className="dashboard-search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search customers"/></label><span>{customers.length} customer{customers.length===1?'':'s'}</span></div>
+      {loading?<div className="dashboard-empty-large"><span className="save-spinner"/><h3>Loading customers…</h3></div>:shown.length?<div className="customer-list">
+        {shown.map(customer=>{
+          const digits=customer.phone.replace(/\D/g,'')
+          return <div className="customer-row" key={customer.key}>
+            <span className="customer-avatar">{customer.name.slice(0,1).toUpperCase()}</span>
+            <div><strong>{customer.name}</strong><small>{customer.phone||'No phone'} · Last order {new Date(customer.lastAt).toLocaleDateString()}</small></div>
+            <span>{customer.orders} order{customer.orders===1?'':'s'}</span>
+            <strong>UGX {money(customer.total)}</strong>
+            {digits?<a className="table-action" href={'https://wa.me/'+digits} target="_blank" rel="noreferrer" aria-label="Message customer"><MessageCircle size={16}/></a>:<span/>}
+          </div>
+        })}
+      </div>:<div className="dashboard-empty-large"><Users size={28}/><h3>No customers yet</h3><p>Your customer list builds automatically from real orders.</p></div>}
     </section>
   </DashboardShell>
 }
 
 export function DashboardAnalyticsPage(){
   const {views}=useStoreSnapshot()
+  const {orders,loading}=useSellerOrdersSnapshot()
+  const completed=orders.filter(order=>order.status==='completed')
+  const revenue=completed.reduce((sum,order)=>sum+order.total,0)
+  const conversion=views>0?Math.min(100,(orders.length/views)*100):0
+  const average=completed.length?revenue/completed.length:0
+  const active=orders.filter(order=>!['completed','cancelled'].includes(order.status)).length
+
   return <DashboardShell title="Analytics" subtitle="Understand what’s working.">
-    <section className="metric-grid premium-metrics"><article><span className="metric-icon"><BarChart3 size={20}/></span><div><small>Conversion</small><strong>0%</strong><em>Orders not connected yet</em></div></article><article><span className="metric-icon"><Eye size={20}/></span><div><small>Store views</small><strong>{views}</strong><em>Total storefront visits</em></div></article><article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>0</strong><em>No orders yet</em></div></article><article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Revenue</small><strong>UGX 0</strong><em>No sales yet</em></div></article></section>
-    <section className="dash-card premium-card analytics-card"><div className="dash-card-head"><div><h2>Store visits</h2><p>Every storefront visit is counted, including your own previews.</p></div><span className="analytics-total">{views}</span></div><div className="analytics-view-visual"><div className="analytics-view-orb"><Eye size={28}/><strong>{views}</strong><span>Total storefront views</span></div><div className="analytics-view-copy"><strong>{views}</strong><span>total visits recorded</span><small>Views update whenever the storefront is opened or refreshed.</small></div></div></section>
+    <section className="metric-grid premium-metrics">
+      <article><span className="metric-icon"><BarChart3 size={20}/></span><div><small>Conversion</small><strong>{conversion.toFixed(1)}%</strong><em>{orders.length} orders / {views} views</em></div></article>
+      <article><span className="metric-icon"><Eye size={20}/></span><div><small>Store views</small><strong>{views}</strong><em>Total storefront visits</em></div></article>
+      <article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Active orders</small><strong>{active}</strong><em>{orders.length} total orders</em></div></article>
+      <article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Completed revenue</small><strong>UGX {money(revenue)}</strong><em>Avg UGX {money(average)}</em></div></article>
+    </section>
+    <div className="dashboard-two-col analytics-live-grid">
+      <section className="dash-card premium-card analytics-card"><div className="dash-card-head"><div><h2>Store visits</h2><p>Every storefront visit is counted, including your own previews.</p></div><span className="analytics-total">{views}</span></div><div className="analytics-view-visual"><div className="analytics-view-orb"><Eye size={28}/><strong>{views}</strong><span>Total storefront views</span></div><div className="analytics-view-copy"><strong>{orders.length}</strong><span>orders created</span><small>{conversion.toFixed(1)}% view-to-order conversion.</small></div></div></section>
+      <section className="dash-card premium-card order-insight-card"><div className="dash-card-head"><div><h2>Order pipeline</h2><p>Live fulfilment snapshot.</p></div></div>
+        {loading?<div className="dashboard-empty-mini"><span className="save-spinner"/></div>:<div className="order-insight-list">
+          {(['new','confirmed','processing','delivering','completed'] as OrderStatus[]).map(status=><div key={status}><span className={'status-pill '+status}>{formatOrderStatus(status)}</span><strong>{orders.filter(order=>order.status===status).length}</strong></div>)}
+        </div>}
+      </section>
+    </div>
   </DashboardShell>
 }
 

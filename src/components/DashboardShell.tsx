@@ -6,6 +6,9 @@ import { clearSellerLocalData, getStoreAccent, getStoreProfile, hydrateSellerDat
 import { backend } from '../lib/backend'
 import { applyTheme, getTheme } from '../lib/theme'
 import { Logo } from './Logo'
+import { InstallAppButton } from './InstallAppButton'
+import { fetchSellerNotifications, markAllNotificationsRead, markNotificationRead } from '../lib/orders'
+import type { SellerNotification } from '../lib/orders'
 
 const links = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -25,6 +28,8 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   const [role,setRole]=useState('seller')
   const [plan,setPlan]=useState('free')
   const [dark,setDark]=useState(()=>getTheme()==='dark')
+  const [notifications,setNotifications]=useState<SellerNotification[]>([])
+  const [notificationsOpen,setNotificationsOpen]=useState(false)
 
   useEffect(()=>{
     applyTheme(dark?'dark':'light')
@@ -47,6 +52,26 @@ export function DashboardShell({ children, title, subtitle, action }: { children
     return()=>{
       window.removeEventListener('gulako-brand',refresh)
       window.removeEventListener('gulako-store',refresh)
+    }
+  },[])
+
+
+  useEffect(()=>{
+    let active=true
+    const load=async()=>{
+      try{
+        const next=await fetchSellerNotifications()
+        if(active)setNotifications(next)
+      }catch{/* notifications should never block the seller workspace */}
+    }
+    void load()
+    const refresh=()=>void load()
+    window.addEventListener('gulako-orders',refresh)
+    const timer=window.setInterval(refresh,30000)
+    return()=>{
+      active=false
+      window.removeEventListener('gulako-orders',refresh)
+      window.clearInterval(timer)
     }
   },[])
 
@@ -84,7 +109,18 @@ export function DashboardShell({ children, title, subtitle, action }: { children
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           <div><p className="eyebrow">Seller workspace</p><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
-          <div className="dashboard-top-actions"><button className="icon-button dashboard-theme-toggle" onClick={()=>setDark(value=>!value)} aria-label={dark?'Use light mode':'Use dark mode'} title={dark?'Use light mode':'Use dark mode'}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button><button className="icon-button dashboard-notification-button" aria-label="Notifications"><Bell size={18} /></button>{action}</div>
+          <div className="dashboard-top-actions">
+            <span className="dashboard-install"><InstallAppButton compact/></span>
+            <button className="icon-button dashboard-theme-toggle" onClick={()=>setDark(value=>!value)} aria-label={dark?'Use light mode':'Use dark mode'} title={dark?'Use light mode':'Use dark mode'}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button>
+            <div className="notification-wrap">
+              <button className="icon-button dashboard-notification-button" onClick={()=>setNotificationsOpen(value=>!value)} aria-label="Notifications"><Bell size={18}/>{notifications.some(item=>!item.readAt)&&<span className="notification-badge">{notifications.filter(item=>!item.readAt).length}</span>}</button>
+              {notificationsOpen&&<div className="notification-panel">
+                <div className="notification-panel-head"><div><strong>Notifications</strong><small>{notifications.filter(item=>!item.readAt).length} unread</small></div>{notifications.some(item=>!item.readAt)&&<button onClick={async()=>{await markAllNotificationsRead();setNotifications(items=>items.map(item=>({...item,readAt:item.readAt||new Date().toISOString()})))}}>Mark all read</button>}</div>
+                <div className="notification-list">{notifications.length?notifications.map(item=><a className={item.readAt?'notification-item':'notification-item unread'} key={item.id} href={item.href} onClick={()=>{if(!item.readAt)void markNotificationRead(item.id)}}><span/><div><strong>{item.title}</strong><p>{item.body}</p><small>{new Date(item.createdAt).toLocaleString()}</small></div></a>):<div className="notification-empty">You’re all caught up.</div>}</div>
+              </div>}
+            </div>
+            {action}
+          </div>
         </header>
         {children}
       </main>

@@ -1,11 +1,15 @@
 {
+  "id": "/",
   "name": "Gulako",
   "short_name": "Gulako",
   "description": "Take your shop online. Sell faster with products, orders, payments and customers in one place.",
-  "start_url": "/",
+  "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#fbfaff",
   "theme_color": "#7c3aed",
+  "categories": ["business", "shopping"],
   "icons": [
     {"src": "/gulako-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
   ]
