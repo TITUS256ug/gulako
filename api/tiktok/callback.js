@@ -21,7 +21,7 @@ export default async function handler(req,res){
 
   const clientKey=process.env.TIKTOK_CLIENT_KEY
   const clientSecret=process.env.TIKTOK_CLIENT_SECRET
-  const supabaseUrl=process.env.VITE_SUPABASE_URL
+  const supabaseUrl=process.env.VITE_API_URL||process.env.VITE_SUPABASE_URL
   const serviceRole=process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if(!clientKey||!clientSecret||!supabaseUrl||!serviceRole){
