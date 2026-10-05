@@ -7,6 +7,8 @@ export function Footer() {
       <div className="footer-links">
         <a href="/signin">Sign in</a>
         <a href="/signup">Start selling</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
       </div>
       <small>© 2026 Gulako</small>
     </footer>
