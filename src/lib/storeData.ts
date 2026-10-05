@@ -123,7 +123,33 @@ export async function checkStoreSlugAvailability(value:string,currentSlug?:strin
 }
 
 export function getStoreProfile():StoreProfile{
-  return{...emptyStoreProfile,...safeParse<Partial<StoreProfile>>(PROFILE_KEY,{})}
+  const profile={...emptyStoreProfile,...safeParse<Partial<StoreProfile>>(PROFILE_KEY,{})}
+  if(!profile.whatsapp)profile.whatsapp='+256'
+  return profile
+}
+
+export function normalizeWhatsapp(value:string){
+  const raw=value.trim()
+  if(!raw)return '+256'
+  if(raw.startsWith('+'))return raw
+  const digits=raw.replace(/\D/g,'')
+  if(!digits)return '+256'
+  if(digits.startsWith('256'))return '+'+digits
+  if(digits.startsWith('0'))return '+256'+digits.slice(1)
+  return '+256'+digits
+}
+
+export function applyStoreBrand(profile:StoreProfile){
+  cacheProfile(profile)
+  void (async()=>{
+    const {data:{user}}=await backend.auth.getUser()
+    if(!user)return
+    await backend.from('shops').update({
+      accent:profile.accent,
+      accent_color:profile.accentColor,
+      updated_at:new Date().toISOString(),
+    }).eq('owner_id',user.id)
+  })()
 }
 
 export function getSellerProducts():Product[]{
