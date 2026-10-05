@@ -51,7 +51,7 @@ export const pricing = [
     suffix: '/mo',
     note: 'Grow your shop',
     featured: true,
-    features: ['Up to 250 products', 'Unlimited orders', 'Advanced maps', 'Analytics & customization'],
+    features: ['Unlimited products', 'Unlimited orders', 'Advanced maps', 'Analytics & customization'],
   },
   {
     name: 'Business',

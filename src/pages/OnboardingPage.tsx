@@ -82,7 +82,7 @@ export function OnboardingPage() {
                   <span>WhatsApp number</span>
                   <div className="input-shell">
                     <MessageCircle size={18} />
-                    <input placeholder="+256..." />
+                    <input defaultValue="+256" inputMode="tel" />
                   </div>
                 </label>
 
@@ -90,7 +90,7 @@ export function OnboardingPage() {
                   <span>Phone number</span>
                   <div className="input-shell">
                     <MessageCircle size={18} />
-                    <input placeholder="+256..." />
+                    <input defaultValue="+256" inputMode="tel" />
                   </div>
                 </label>
 

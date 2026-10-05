@@ -22,7 +22,7 @@ function useAccountPlan(){
       if(data?.plan)setPlan(data.plan as Plan)
     })()
   },[])
-  const limit=plan==='free'?100:plan==='pro'?250:null
+  const limit=plan==='free'?100:null
   return{plan,limit}
 }
 
@@ -232,7 +232,7 @@ export function DashboardProductsPage(){
     </section>}
 
     <section className="dash-card premium-card">
-      <div className="product-toolbar"><label className="dashboard-search"><Search size={17}/><input placeholder="Search products"/></label><span>{limit?`${products.length} / ${limit} active on ${plan}`:`${products.length} active · unlimited on Business`}</span></div>
+      <div className="product-toolbar"><label className="dashboard-search"><Search size={17}/><input placeholder="Search products"/></label><span>{limit?`${products.length} / ${limit} active on ${plan}`:`${products.length} active · unlimited on ${plan}`}</span></div>
       {products.length ? <div className="inventory-grid">
         {products.map(p=><article className="inventory-card" key={p.id}>
           <div className="inventory-image">{p.image?<img src={p.image} alt={p.name}/>:<PackagePlus size={28}/>}</div>

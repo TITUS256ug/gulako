@@ -53,7 +53,7 @@ const RESERVED_SLUGS = new Set([
 ])
 
 export const emptyStoreProfile: StoreProfile = {
-  businessName:'', slug:'', category:'', location:'', description:'', whatsapp:'',
+  businessName:'', slug:'', category:'', location:'', description:'', whatsapp:'+256',
   mapsLink:'', tiktok:'', instagram:'', deliveryInfo:'', paymentNetwork:'', paymentNumber:'',
   mtnMerchantCode:'', airtelMerchantCode:'', accent:'violet', cover:'',
 }
@@ -142,7 +142,7 @@ function rowToProfile(row:any):StoreProfile{
     category:row.category??'',
     location:row.location??'',
     description:row.description??'',
-    whatsapp:row.whatsapp??'',
+    whatsapp:row.whatsapp || '+256',
     mapsLink:row.maps_link??'',
     tiktok:row.tiktok??'',
     instagram:row.instagram??'',
