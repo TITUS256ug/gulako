@@ -10,6 +10,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
   const [message,setMessage]=useState('')
   const [error,setError]=useState('')
   const [busy,setBusy]=useState(false)
+  const [pendingEmail,setPendingEmail]=useState('')
   const isSignup = mode === 'signup'
 
   const submit=async(e:FormEvent<HTMLFormElement>)=>{
@@ -32,7 +33,10 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
       })
       if(error){setError(error.message);setBusy(false);return}
       if(data.session) window.location.replace('/dashboard')
-      else setMessage('Check your email to verify your account, then sign in.')
+      else {
+        setPendingEmail(email)
+        setMessage('Verification email sent. Open it to activate your account.')
+      }
     }else{
       const {error}=await backend.auth.signInWithPassword({email,password})
       if(error){setError(error.message);setBusy(false);return}
@@ -51,6 +55,18 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
       options:{redirectTo:window.location.origin+'/dashboard'},
     })
     if(error)setError(provider==='tiktok'?'TikTok sign-in will activate after provider credentials are connected.':error.message)
+  }
+
+  const resend=async()=>{
+    if(!pendingEmail)return
+    setError('');setMessage('')
+    const {error}=await backend.auth.resend({
+      type:'signup',
+      email:pendingEmail,
+      options:{emailRedirectTo:window.location.origin+'/dashboard'},
+    })
+    if(error)setError(error.message)
+    else setMessage('Verification email sent again.')
   }
 
   const reset=async()=>{
@@ -77,6 +93,7 @@ export function AuthPage({ mode = 'signin' }: { mode?: 'signin'|'signup' }) {
         {!isSignup && <div className="auth-options"><label className="check-row"><input type="checkbox" defaultChecked/> Remember me</label><button className="link-button" type="button" onClick={reset}>Forgot password?</button></div>}
         {error&&<p className="auth-error">{error}</p>}
         {message&&<p className="auth-success">{message}</p>}
+        {pendingEmail&&<button className="resend-verification" type="button" onClick={resend}>Resend verification email</button>}
         <button className="primary-button large full-width" type="submit" disabled={busy}>{busy?'Please wait…':isSignup ? 'Create account' : 'Sign in'} {!busy&&<ArrowRight size={18}/>}</button>
       </form>
 
