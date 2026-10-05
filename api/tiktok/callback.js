@@ -1,12 +1,20 @@
+import crypto from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 
 const SITE='https://gulako.site'
 const REDIRECT_URI=SITE+'/api/tiktok/callback'
 
-function readCookie(header,name){
-  if(!header)return''
-  const part=header.split(';').map(v=>v.trim()).find(v=>v.startsWith(name+'='))
-  return part?decodeURIComponent(part.slice(name.length+1)):''
+function validState(state,secret){
+  if(!state||!secret)return false
+  const parts=state.split('.')
+  if(parts.length!==3)return false
+  const [nonce,ts,sig]=parts
+  const age=Date.now()-Number(ts)
+  if(!nonce||!Number.isFinite(Number(ts))||age<0||age>10*60*1000)return false
+  const expected=crypto.createHmac('sha256',secret).update(nonce+'.'+ts).digest('hex')
+  const a=Buffer.from(sig)
+  const b=Buffer.from(expected)
+  return a.length===b.length&&crypto.timingSafeEqual(a,b)
 }
 
 function fail(res,reason){
@@ -32,15 +40,11 @@ export default async function handler(req,res){
   const code=typeof req.query.code==='string'?req.query.code:''
   const returnedState=typeof req.query.state==='string'?req.query.state:''
   const error=typeof req.query.error==='string'?req.query.error:''
-  const cookieState=readCookie(req.headers.cookie,'gulako_tiktok_state')
-
   if(error){fail(res,'denied');return}
-  if(!code||!returnedState||!cookieState||returnedState!==cookieState){
+  if(!code||!validState(returnedState,clientSecret)){
     fail(res,'state')
     return
   }
-
-  res.setHeader('Set-Cookie','gulako_tiktok_state=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax')
 
   try{
     const tokenBody=new URLSearchParams({
