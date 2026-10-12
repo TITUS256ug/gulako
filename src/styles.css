@@ -1159,3 +1159,25 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
   .checkout-customer-card{padding:18px}.checkout-customer-grid,.order-payment-report{grid-template-columns:1fr}.checkout-customer-grid .wide{grid-column:auto}
   .order-track-hero{align-items:flex-start;flex-direction:column}.order-track-hero-actions{width:100%;justify-content:space-between}.order-progress-card{padding:18px}.order-progress-steps{grid-template-columns:1fr;gap:6px}.order-progress-step{grid-template-columns:34px 1fr;justify-items:start;text-align:left;align-items:center}.order-progress-step:before{left:15px;right:auto;top:-14px;bottom:22px;width:2px;height:auto}.order-progress-step>div{justify-items:start}.order-detail-card{padding:18px}.public-order-items>div{grid-template-columns:48px 1fr auto}.public-order-items img,.public-order-placeholder{width:48px;height:48px}
 }
+
+/* Seller discovery tools */
+.discovery-intro{display:flex;justify-content:space-between;gap:24px;align-items:center;margin-bottom:24px}
+.discovery-intro h2{font-size:28px;line-height:1.2;margin:10px 0}
+.discovery-intro p{max-width:650px;line-height:1.65;color:var(--muted)}
+.discovery-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;align-items:start}
+.discovery-aside{display:grid;gap:20px;min-width:0}
+.discovery-aside p{line-height:1.65;margin:12px 0 18px}
+.discovery-aside .section-kicker{display:flex;align-items:center;gap:6px}
+.discovery-check{display:flex;align-items:flex-start;gap:14px;padding:22px 0;border-bottom:1px solid var(--border);color:inherit;text-decoration:none}
+.discovery-check:last-child{border-bottom:0}
+.discovery-check>div{flex:1;min-width:0}
+.discovery-check p{color:var(--muted);line-height:1.55;margin:7px 0}
+.discovery-check small{font-weight:600;color:var(--purple)}
+.discovery-check-icon{width:34px;height:34px;display:grid;place-items:center;flex-shrink:0;border-radius:50%;background:var(--surface-3)}
+.discovery-check-icon.done{color:var(--purple);background:var(--purple-soft)}
+.search-preview{overflow-wrap:anywhere;padding:22px 0}
+.search-preview h3{color:var(--purple);font-size:21px;line-height:1.4;margin:10px 0}
+.search-preview p{margin:0}
+.shop-delivery-details{padding:22px 0;line-height:1.65;white-space:pre-line}
+.shop-delivery-details h2{font-size:19px;margin-bottom:6px}
+@media(max-width:850px){.discovery-layout{grid-template-columns:1fr}.discovery-intro{align-items:flex-start;flex-direction:column}.discovery-intro h2{font-size:24px}.discovery-check{gap:10px}}

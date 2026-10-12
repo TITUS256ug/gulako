@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit -p tsconfig.app.json && vite build",
-    "preview": "vite preview"
+    "build": "tsc --noEmit -p tsconfig.app.json && vite build && vite build --ssr server/render.tsx --outDir .generated",
+    "preview": "vite preview",
+    "test:discovery": "node --test tests/discovery.test.mjs"
   },
   "dependencies": {
     "lucide-react": "0.468.0",

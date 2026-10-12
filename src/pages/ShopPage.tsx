@@ -7,23 +7,25 @@ import { ProductCard } from '../components/ProductCard'
 import type { Product } from '../data/mock'
 import { fetchPublicShop, getStoreAccent, recordStoreView } from '../lib/storeData'
 import { shopWhatsappMessage, whatsappUrl } from '../lib/whatsapp'
+import { readDiscoveryData } from '../lib/discoveryData'
 import type { StoreProfile } from '../lib/storeData'
 
-type PublicShopData={
+export type PublicShopData={
   profile:StoreProfile
   logo:string
   views:number
   products:Product[]
 }
 
-export function ShopPage({ slug }: { slug?: string }) {
-  const [shop,setShop]=useState<PublicShopData|null>(null)
-  const [ready,setReady]=useState(false)
+export function ShopPage({ slug, initialData = readDiscoveryData<PublicShopData>("shop", slug) }: { slug?: string; initialData?: PublicShopData | null }) {
+  const [shop,setShop]=useState<PublicShopData|null>(initialData ?? null)
+  const [ready,setReady]=useState(initialData !== undefined)
   const [query,setQuery]=useState('')
   const [category,setCategory]=useState('All products')
 
   useEffect(()=>{
     let active=true
+    if(initialData !== undefined){if(initialData && slug)void recordStoreView(slug);return}
     if(!slug){setReady(true);return}
     fetchPublicShop(slug).then(async data=>{
       if(!active)return
@@ -109,6 +111,7 @@ export function ShopPage({ slug }: { slug?: string }) {
           </div>
         </section>
 
+        {profile.deliveryInfo&&<section className="shop-delivery-details"><h2>Delivery & pickup</h2><p>{profile.deliveryInfo}</p></section>}
         <section className="premium-catalog-shell">
           <div className="catalog-heading-row premium-catalog-head">
             <div>
