@@ -7,18 +7,20 @@ import type { Product } from '../data/mock'
 import { addToCart } from '../lib/cart'
 import { fetchPublicProduct, getStoreAccent } from '../lib/storeData'
 import { productWhatsappMessage, whatsappUrl } from '../lib/whatsapp'
+import { readDiscoveryData } from '../lib/discoveryData'
 import type { StoreProfile } from '../lib/storeData'
 
-type ProductData={product:Product;profile:StoreProfile;logo:string}
+export type ProductData={product:Product;profile:StoreProfile;logo:string}
 
-export function ProductPage({ id }: { id: string }) {
-  const [data,setData]=useState<ProductData|null>(null)
-  const [ready,setReady]=useState(false)
-  const [activeImage,setActiveImage]=useState('')
+export function ProductPage({ id, initialData = readDiscoveryData<ProductData>("product", id) }: { id: string; initialData?: ProductData | null }) {
+  const [data,setData]=useState<ProductData|null>(initialData ?? null)
+  const [ready,setReady]=useState(initialData !== undefined)
+  const [activeImage,setActiveImage]=useState(initialData?.product.images?.[0] || initialData?.product.image || '')
   const [added,setAdded]=useState(false)
 
   useEffect(()=>{
     let active=true
+    if(initialData !== undefined)return
     fetchPublicProduct(id).then(result=>{
       if(!active)return
       setData(result)
@@ -83,13 +85,13 @@ export function ProductPage({ id }: { id: string }) {
 
         <span className="category-chip inline-chip">{product.category}</span>
         <h1>{product.name}</h1>
-        <div className="detail-price-row"><p className="detail-price">UGX {formatted}</p>{product.negotiable&&<span className="negotiable-detail-badge">Slightly negotiable</span>}</div>
+        <div className="detail-price-row"><p className="detail-price">{product.currency} {formatted}</p>{product.negotiable&&<span className="negotiable-detail-badge">Slightly negotiable</span>}</div>
         {product.description&&<p className="detail-description">{product.description}</p>}
 
         <div className="premium-product-benefits">
           <span><Check size={17}/> {product.stock} in stock</span>
           <span><ShieldCheck size={17}/> Direct from seller</span>
-          {profile.deliveryInfo&&<span><Truck size={17}/> Delivery available</span>}
+          {profile.deliveryInfo&&<span><Truck size={17}/> {profile.deliveryInfo}</span>}
         </div>
 
         <div className="mobile-money-hint"><Sparkles size={18}/><div><strong>Direct merchant checkout</strong><span>Buy now takes you to the seller's MTN MoMoPay or Airtel Money Pay merchant code when available.</span></div></div>

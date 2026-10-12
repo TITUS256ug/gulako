@@ -50,7 +50,7 @@ export const BUSINESS_CATEGORIES = [
 
 const RESERVED_SLUGS = new Set([
   '','login','signin','signup','register','dashboard','cart','checkout','order','product',
-  'pricing','explore','api','admin','settings','shop','demo','founder',
+  'pricing','explore','api','admin','settings','shop','demo','founder','terms','privacy','auth','onboarding',
 ])
 
 export const emptyStoreProfile: StoreProfile = {
@@ -162,7 +162,7 @@ export function getStoreViews(){
   return Math.max(40,Number(data.views??40))
 }
 
-function rowToProfile(row:any):StoreProfile{
+export function rowToProfile(row:any):StoreProfile{
   return{
     businessName:row.business_name??'',
     slug:row.slug??'',
@@ -184,7 +184,7 @@ function rowToProfile(row:any):StoreProfile{
   }
 }
 
-function rowToProduct(row:any,shopName:string,shopSlug:string):Product{
+export function rowToProduct(row:any,shopName:string,shopSlug:string):Product{
   const images=Array.isArray(row.product_images) ? row.product_images.filter(Boolean) : []
   const image=images[0] || row.image_url || ''
   return{

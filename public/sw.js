@@ -1,4 +1,4 @@
-const CACHE = 'gulako-v4-shell'
+const CACHE = 'gulako-v5-shell'
 
 self.addEventListener('install', event => {
   self.skipWaiting()
@@ -24,7 +24,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        if (response && response.ok) {
+        if (response && response.ok && new URL(event.request.url).pathname === '/') {
           const copy = response.clone()
           caches.open(CACHE).then(cache => cache.put('/', copy)).catch(() => undefined)
         }

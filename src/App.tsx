@@ -1,3 +1,4 @@
+import { DiscoveryPage } from './pages/DiscoveryPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from './pages/AuthPage'
 import { AuthCallbackPage } from './pages/AuthCallbackPage'
@@ -31,6 +32,7 @@ export default function App() {
   if (path === '/checkout') return <CheckoutPage />
   if (parts[0] === 'order') return <OrderTrackPage id={parts[1] ?? 'GLK-2420'} />
   if (parts[0] === 'product') return <ProductPage id={parts[1] ?? ''} />
+  if (path === '/dashboard/discovery') return <ProtectedRoute><DiscoveryPage /></ProtectedRoute>
   if (path === '/dashboard') return <ProtectedRoute><DashboardHomePage /></ProtectedRoute>
   if (path === '/dashboard/products') return <ProtectedRoute><DashboardProductsPage /></ProtectedRoute>
   if (path === '/dashboard/orders') return <ProtectedRoute><DashboardOrdersPage /></ProtectedRoute>
@@ -41,5 +43,5 @@ export default function App() {
   if (path === '/dashboard/settings') return <ProtectedRoute><DashboardSettingsPage /></ProtectedRoute>
   if (path === '/founder') return <ProtectedRoute><FounderPage /></ProtectedRoute>
   if (parts.length === 1) return <ShopPage slug={parts[0]} />
-  return <HomePage />
+  return <main className="page-container"><h1>Page not found</h1><p>This page is not available.</p><a href="/">Back to Gulako</a></main>
 }

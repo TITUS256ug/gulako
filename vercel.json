@@ -1,5 +1,28 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "functions": {
+    "api/page.js": {
+      "includeFiles": "{dist/index.html,.generated/**}"
+    }
+  },
+  "routes": [
+    {
+      "src": "/sitemap.xml",
+      "dest": "/api/sitemap"
+    },
+    {
+      "src": "/",
+      "dest": "/api/page"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/api/.*",
+      "status": 404
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/page?path=$1"
+    }
   ]
 }
