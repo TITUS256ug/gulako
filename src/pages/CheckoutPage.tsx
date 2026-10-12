@@ -1,5 +1,6 @@
 import { ArrowLeft, Check, Copy, Phone, ShieldCheck, ShoppingBag, Smartphone } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { trackShopEvent } from '../lib/traffic'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { cartDetails, getCart, saveCart } from '../lib/cart'
@@ -100,6 +101,8 @@ export function CheckoutPage() {
       setPlacing('')
     }
   }
+
+  useEffect(()=>{for(const slug of Array.from(new Set(lines.map(line=>line.product.shopSlug))))void trackShopEvent(slug,'checkout_start')},[])
 
   if (!lines.length) {
     return <div className="app-shell"><Header/><main className="page-container checkout-page">

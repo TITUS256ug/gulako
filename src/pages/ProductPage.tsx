@@ -1,6 +1,7 @@
 import { ArrowLeft, Check, MessageCircle, PackageSearch, ShieldCheck, ShoppingBag, Sparkles, Truck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { trackShopEvent } from '../lib/traffic'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import type { Product } from '../data/mock'
@@ -20,11 +21,12 @@ export function ProductPage({ id, initialData = readDiscoveryData<ProductData>("
 
   useEffect(()=>{
     let active=true
-    if(initialData !== undefined)return
+    if(initialData !== undefined){if(initialData)void trackShopEvent(initialData.profile.slug,'product_view');return}
     fetchPublicProduct(id).then(result=>{
       if(!active)return
       setData(result)
       if(result){
+        void trackShopEvent(result.profile.slug,'product_view')
         const images=result.product.images?.length?result.product.images:(result.product.image?[result.product.image]:[])
         setActiveImage(images[0]??'')
       }
@@ -54,11 +56,13 @@ export function ProductPage({ id, initialData = readDiscoveryData<ProductData>("
   const whatsappHref=whatsappUrl(profile.whatsapp,whatsappMessage)
   const add=()=>{
     addToCart(product)
+    void trackShopEvent(profile.slug,'cart_add')
     setAdded(true)
     window.setTimeout(()=>setAdded(false),1400)
   }
   const buy=()=>{
     addToCart(product)
+    void trackShopEvent(profile.slug,'cart_add')
     window.location.href='/checkout?buy=1'
   }
 
@@ -99,7 +103,7 @@ export function ProductPage({ id, initialData = readDiscoveryData<ProductData>("
         <div className="product-cta-stack premium-product-actions">
           <button className="primary-button large full-width" onClick={buy}><ShoppingBag size={19}/> Buy now</button>
           <button className={added?'soft-button large full-width added':'soft-button large full-width'} onClick={add}>{added?<Check size={18}/>:<ShoppingBag size={18}/>} {added?'Added to cart':'Add to cart'}</button>
-          {whatsappHref&&<a className="whatsapp-product premium-whatsapp-button" href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Chat on WhatsApp</a>}
+          {whatsappHref&&<a className="whatsapp-product premium-whatsapp-button" href={whatsappHref} onClick={()=>void trackShopEvent(profile.slug,'whatsapp_click')} target="_blank" rel="noreferrer"><MessageCircle size={18}/> Chat on WhatsApp</a>}
         </div>
         <small className="browser-cart-note">Your cart is saved on this browser so you can come back later.</small>
       </div>

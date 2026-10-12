@@ -6,7 +6,7 @@ import { productSchema, businessSchema, safeJson, renderDocument } from '../serv
 
 process.env.VITE_API_URL = 'https://test.supabase.co'
 process.env.VITE_PUBLIC_TOKEN = 'public-test-token'
-const shop = {id:'shop1',slug:'sample',business_name:'Sample & Co',location:'Kampala',description:'Clothes made in Uganda',category:'Fashion',published:true,whatsapp:'+256700000000',delivery_info:'Pickup in Kampala. Delivery to Entebbe.',logo_url:'https://example.com/logo.png'}
+const shop = {id:'shop1',slug:'sample',business_name:'Sample & Co',location:'Kampala',description:'Clothes made in Uganda',category:'Fashion',published:true,faqs:[{question:'Can I collect?',answer:'Yes, collect in Kampala.'}],opening_hours:[{day:'Monday',status:'open',opens:'09:00',closes:'18:00'}],timezone:'Africa/Kampala',whatsapp:'+256700000000',delivery_info:'Pickup in Kampala. Delivery to Entebbe.',logo_url:'https://example.com/logo.png'}
 const product = {id:'11111111-1111-4111-8111-111111111111',shop_id:'shop1',name:'Linen shirt',category:'Clothing',description:'A light linen shirt.',price:35000,currency:'UGX',stock:4,active:true,image_url:'https://example.com/shirt.jpg'}
 function response() {
   return {headers:{},code:200,body:'',setHeader(k,v){this.headers[k]=v},status(code){this.code=code;return this},send(value){this.body=value;return this},end(){return this}}
@@ -36,6 +36,10 @@ test('shop response contains real content, unique metadata and public data witho
   assert.match(res.body, /rel="canonical" href="https:\/\/gulako.site\/sample"/)
   assert.match(res.body, /Linen shirt/)
   assert.match(res.body, /Pickup in Kampala/)
+  assert.match(res.body, /Can I collect\?/)
+  assert.match(res.body, /Yes, collect in Kampala\./)
+  assert.match(res.body, /09:00/)
+  assert.match(res.body, /OpeningHoursSpecification/)
   assert.match(res.body, /application\/ld\+json/)
   assert.doesNotMatch(res.body, /owner_id|public-test-token/)
   assert.equal((res.body.match(/rel="canonical"/g) || []).length,1)

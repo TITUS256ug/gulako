@@ -1,3 +1,4 @@
+import { validateBusinessDetails, type BusinessHour, type BusinessFaq } from './businessDetails'
 import type { Product } from '../data/mock'
 import { backend } from './backend'
 import { getShopLogo } from './shopBrand'
@@ -7,6 +8,9 @@ export type PaymentNetwork = '' | 'MTN MoMo' | 'Airtel Money'
 
 export type StoreProfile = {
   businessName: string
+  faqs: BusinessFaq[]
+  openingHours: BusinessHour[]
+  timezone: string
   slug: string
   category: string
   location: string
@@ -54,6 +58,7 @@ const RESERVED_SLUGS = new Set([
 ])
 
 export const emptyStoreProfile: StoreProfile = {
+  faqs:[],openingHours:[],timezone:'Africa/Kampala',
   businessName:'', slug:'', category:'', location:'', description:'', whatsapp:'+256',
   mapsLink:'', tiktok:'', instagram:'', deliveryInfo:'', paymentNetwork:'', paymentNumber:'',
   mtnMerchantCode:'', airtelMerchantCode:'', accent:'violet', accentColor:'#7c3aed', cover:'',
@@ -164,6 +169,9 @@ export function getStoreViews(){
 
 export function rowToProfile(row:any):StoreProfile{
   return{
+    faqs:Array.isArray(row.faqs)?row.faqs:[],
+    openingHours:Array.isArray(row.opening_hours)?row.opening_hours:[],
+    timezone:row.timezone||'Africa/Kampala',
     businessName:row.business_name??'',
     slug:row.slug??'',
     category:row.category??'',
@@ -228,11 +236,14 @@ export async function hydrateSellerData(){
 }
 
 export async function saveStoreProfile(profile:StoreProfile){
+  const validation=validateBusinessDetails(profile.openingHours,profile.faqs)
+  if(validation)throw new Error(validation)
   const {data:{user}}=await backend.auth.getUser()
   if(!user)throw new Error('Please sign in first.')
   ensureCacheOwner(user.id)
   const row={
     owner_id:user.id,
+    faqs:profile.faqs,opening_hours:profile.openingHours,timezone:profile.timezone,
     business_name:profile.businessName,
     slug:profile.slug,
     category:profile.category,

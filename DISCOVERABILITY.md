@@ -28,28 +28,37 @@ The build generates Vite client files in `dist` and the server renderer in `.gen
 
 ## Deployment requirements and remaining verification
 
-The existing Vercel project needs **VITE_API_URL** and **VITE_PUBLIC_TOKEN** in the deployed Functions runtime as well as at build time. These are the existing public Supabase connection variables. Never substitute a service-role key. No new database tables or migrations are required.
+The existing Vercel project needs **VITE_API_URL** and **VITE_PUBLIC_TOKEN** in the deployed Functions runtime as well as at build time. These are the existing public Supabase connection variables. Never substitute a service-role key. The SEO foundation alone requires no database migration; the growth release below does.
 
-Target: existing `TITUS256ug/gulako` repository and `gulako.site` production domain. The previously recorded Vercel project was `gulako-hjum`. The currently connected Vercel team returned project-not-found and no projects matching Gulako. Release was therefore not performed through that account.
+SEO foundation is deployed to production at `https://gulako.site` from main commit `8a57f2d82bd077d4b653867f9baac5c5f4f9de93` (Vercel deployment `dpl_8GZGkwihZbS5iJFdm1fBUik9tFYr`). Verified homepage and sitemap HTTP 200, missing shop HTTP 404, private dashboard noindex, and browser homepage rendering.
 
-Completed locally: TypeScript check, client build, SSR build, and handler integration tests for real server HTML, product schema/price/stock consistency, unpublished/inactive records, 404/503 behavior, private route noindex, sitemap pagination and seller-text escaping. Database responses in tests are fixtures; production database connectivity and RLS are not validated by these tests. A browser binary was unavailable, so browser/mobile visual checks remain pending.
-
-Before promoting a preview on the correct Vercel account:
-
-1. Open a real published shop and product; confirm status 200, correct canonical URL and product details in the raw HTML with JavaScript disabled.
-2. Check shopping interactions and the **Get discovered** page at mobile and desktop widths.
-3. Open `/sitemap.xml` and its children; confirm real published records and exclusion of unpublished shops/inactive products. Check a missing shop returns 404.
-4. Confirm private pages have `X-Robots-Tag: noindex, follow` and static assets/TikTok endpoints still route correctly.
-5. Confirm runtime public connection variables are configured and perform a Rich Results Test on representative product/business pages.
+The growth release below is separate and MUST NOT be promoted until its migration is applied. Gulako's database is `ydslkdrbcthhjclzgrqa`; the current Supabase connection exposes only NileFlow and Nile Core and cannot administer Gulako. Do not change the application to either unrelated project.
 
 After release, the domain owner should verify `gulako.site` in Google Search Console and Bing Webmaster Tools and submit the sitemap. Do not claim submissions or indexing are complete until confirmed by those services. Eligible merchants can connect their storefront URL to their own Google Business Profile. A map link or structured data does not create or verify a Business Profile.
 
-## Follow-on development
+## Business growth release
 
-- Optional structured address, opening hours and service-area fields; publish only merchant-confirmed facts.
-- Merchant-editable FAQs and product-description assistance, with review before publishing.
-- Referral and order-conversion reporting using real measurements. AI visibility cannot be inferred from a profile checklist, and not all AI referrals carry attribution.
-- Search Console integration after domain ownership and account access are established.
+- Merchant-edited FAQs and opening hours, with timezone, closed days and overnight hours; both render in public server HTML. Opening hours also populate business structured data. No invented business facts or FAQ rich-result promises.
+- AI-assisted product descriptions through Vercel AI Gateway (`openai/gpt-5.4-nano`, optional `AI_GATEWAY_MODEL` override). Seller authentication and persistent 20 requests/day quota. Only supplied facts; editable draft requires seller review and explicit use/save. The existing Vercel deployment OIDC identity supplies Gateway authentication; live access and credits still require verification.
+- Fresh session/event tracking with first-touch coarse source and campaign, server-side order linkage, owner-only reports and owner-preview exclusions. DNT and automated browsers skipped. Historical seeded views do not populate reports. Checkout awaits a bounded tracking request; analytics failure never prevents the order itself. Missing referrers, blocked tracking and WhatsApp-only purchases remain unmeasured. Session conversion uses sessions with orders, not orders divided by seeded visits. Completed value reflects seller status, not verified payment.
+
+### Required rollout order
+
+1. Connect the Supabase account with permission to Gulako project `ydslkdrbcthhjclzgrqa` and inspect the actual orders schema/function against the repository baseline.
+2. Apply `supabase/migrations/20261012120522_gulako_business_growth.sql` there using the migration tool. It adds shop fields, RLS-protected visits/events/AI quota and attributed-order/reporting RPCs. It preserves the original order function for the current production frontend. Do not deploy the frontend first: public server queries require the new columns.
+3. Verify database policies/advisors and seller/anonymous RPC behavior on the real project. Local PostgreSQL tests use isolated fixture tables and a stub original order function, so they cannot confirm live schema compatibility.
+4. Deploy this branch to preview with the existing public database variables and check seller settings, a product draft and storefront on desktop/mobile. Verify authenticated AI generation and Gateway credits before promotion. Use explicitly disposable test-shop orders for end-to-end checkout verification.
+5. Merge to main; Vercel Git integration deploys production. Recheck SSR, sitemap, checkout and actual report linkage. No full growth production rollout has occurred yet.
+
+### Verification
+
+`npm run build`, `npm run test:discovery`, `npm run test:growth`.
+
+Growth tests run isolated PostgreSQL via PGlite: migration application, invalid business fields, overnight hours, event retries, anonymous write boundaries, cross-shop and expired attribution, owner exclusion/read isolation, persistent AI quota, and AI endpoint request rejection. Discovery tests cover SSR FAQs/hours as well as the original discovery foundation. Live authenticated seller/mobile interactions and real AI output remain unverified because the required backend is not connected.
+
+### Recommended next increments
+
+Merchant-entered return/exchange policies and service areas; product variants and low-stock alerts; genuine post-order reviews with moderation; payment verification before claiming paid revenue; consent-based customer follow-up; domain ownership verification and Search Console reporting. Preserve independent shops without cross-shop advertising or a marketplace directory.
 
 ## Guidance
 

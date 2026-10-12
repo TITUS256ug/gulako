@@ -1,12 +1,15 @@
-import { ArrowUpRight, BarChart3, Check, CheckCircle2, Copy, Eye, ImagePlus, Link2, MessageCircle, MoreHorizontal, PackagePlus, Pencil, Plus, Search, Settings2, ShoppingBag, Sparkles, Trash2, TrendingUp, Users, X } from 'lucide-react'
+import { ArrowUpRight, Check, CheckCircle2, Copy, Eye, ImagePlus, Link2, MessageCircle, MoreHorizontal, PackagePlus, Pencil, Plus, Search, Settings2, ShoppingBag, Sparkles, Trash2, TrendingUp, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import { BusinessDetailsEditor } from '../components/BusinessDetailsEditor'
+import { AiDescription } from '../components/AiDescription'
 import { DashboardShell } from '../components/DashboardShell'
 import { PricingSection } from '../components/PricingSection'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
+import { fetchTrafficReport } from '../lib/traffic'
 import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
-import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, applyStoreBrand, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreAccent, getStoreProfile, getStoreViews, hydrateSellerData, normalizeWhatsapp, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
+import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, applyStoreBrand, checkStoreSlugAvailability, deleteSellerProduct, duplicateSellerProduct, getSellerProducts, getStoreAccent, getStoreProfile, hydrateSellerData, normalizeWhatsapp, saveStoreProfile, slugifyStoreName, updateSellerProduct, uploadSellerAsset, validateStoreSlug } from '../lib/storeData'
 import type { AccentName, StoreProfile } from '../lib/storeData'
 import { fetchSellerOrders, formatOrderStatus, updateOrderPaymentStatus, updateSellerOrderStatus } from '../lib/orders'
 import type { OrderStatus, SellerOrder } from '../lib/orders'
@@ -32,7 +35,6 @@ function useStoreSnapshot(){
   const [profile,setProfile]=useState(()=>getStoreProfile())
   const [products,setProducts]=useState(()=>getSellerProducts())
   const [logo,setLogo]=useState(()=>getShopLogo())
-  const [views,setViews]=useState(()=>getStoreViews())
 
   useEffect(()=>{
     void hydrateSellerData()
@@ -40,7 +42,6 @@ function useStoreSnapshot(){
       setProfile(getStoreProfile())
       setProducts(getSellerProducts())
       setLogo(getShopLogo())
-      setViews(getStoreViews())
     }
     window.addEventListener('gulako-store',refresh)
     window.addEventListener('gulako-products',refresh)
@@ -54,7 +55,7 @@ function useStoreSnapshot(){
     }
   },[])
 
-  return {profile,products,logo,views}
+  return {profile,products,logo}
 }
 
 
@@ -125,7 +126,9 @@ function StoreHealth({profile,productCount,logo}:{profile:StoreProfile;productCo
 }
 
 export function DashboardHomePage(){
-  const {profile,products,logo,views}=useStoreSnapshot()
+  const {profile,products,logo}=useStoreSnapshot()
+  const [sessions,setSessions]=useState<number|null>(null)
+  useEffect(()=>{let active=true;void fetchTrafficReport().then(r=>{if(active)setSessions(r.sessions)}).catch(()=>{});return()=>{active=false}},[])
   const {plan,limit}=useAccountPlan()
   const {orders,loading}=useSellerOrdersSnapshot()
   const count=products.length
@@ -152,7 +155,7 @@ export function DashboardHomePage(){
     <section className="metric-grid premium-metrics">
       <article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>{orders.length}</strong><em>{orders.length?'Live order data':'No orders yet'}</em></div></article>
       <article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Completed sales</small><strong>UGX {money(sales)}</strong><em>{completed.length} completed</em></div></article>
-      <article><span className="metric-icon"><Eye size={20}/></span><div><small>Shop views</small><strong>{views}</strong><em>Total storefront visits</em></div></article>
+      <article><span className="metric-icon"><Eye size={20}/></span><div><small>Visitor sessions</small><strong>{sessions??'—'}</strong><em>{sessions===null?'Reporting unavailable':'Measured · last 30 days'}</em></div></article>
       <article><span className="metric-icon"><Users size={20}/></span><div><small>Customers</small><strong>{customers}</strong><em>From real orders</em></div></article>
     </section>
 
@@ -271,6 +274,7 @@ export function DashboardProductsPage(){
           <label><span>Stock</span><input name="stock" type="number" min="0" defaultValue={editingProduct?.stock ?? 1}/></label>
           <label className="wide"><span>Description</span><textarea name="description" defaultValue={editingProduct?.description ?? ''} placeholder="Tell customers about this product"/></label>
         </div>
+        <AiDescription/>
         {error&&<p className="form-error">{error}</p>}
         <div className="editor-actions"><button type="button" className="soft-button" onClick={closeForm}>Cancel</button><button className="primary-button" type="submit"><CheckCircle2 size={17}/>{editingId?'Save changes':'Save product'}</button></div>
       </form>
@@ -378,33 +382,6 @@ export function DashboardCustomersPage(){
         })}
       </div>:<div className="dashboard-empty-large"><Users size={28}/><h3>No customers yet</h3><p>Your customer list builds automatically from real orders.</p></div>}
     </section>
-  </DashboardShell>
-}
-
-export function DashboardAnalyticsPage(){
-  const {views}=useStoreSnapshot()
-  const {orders,loading}=useSellerOrdersSnapshot()
-  const completed=orders.filter(order=>order.status==='completed')
-  const revenue=completed.reduce((sum,order)=>sum+order.total,0)
-  const conversion=views>0?Math.min(100,(orders.length/views)*100):0
-  const average=completed.length?revenue/completed.length:0
-  const active=orders.filter(order=>!['completed','cancelled'].includes(order.status)).length
-
-  return <DashboardShell title="Analytics" subtitle="Understand what’s working.">
-    <section className="metric-grid premium-metrics">
-      <article><span className="metric-icon"><BarChart3 size={20}/></span><div><small>Conversion</small><strong>{conversion.toFixed(1)}%</strong><em>{orders.length} orders / {views} views</em></div></article>
-      <article><span className="metric-icon"><Eye size={20}/></span><div><small>Store views</small><strong>{views}</strong><em>Total storefront visits</em></div></article>
-      <article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Active orders</small><strong>{active}</strong><em>{orders.length} total orders</em></div></article>
-      <article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Completed revenue</small><strong>UGX {money(revenue)}</strong><em>Avg UGX {money(average)}</em></div></article>
-    </section>
-    <div className="dashboard-two-col analytics-live-grid">
-      <section className="dash-card premium-card analytics-card"><div className="dash-card-head"><div><h2>Store visits</h2><p>Every storefront visit is counted, including your own previews.</p></div><span className="analytics-total">{views}</span></div><div className="analytics-view-visual"><div className="analytics-view-orb"><Eye size={28}/><strong>{views}</strong><span>Total storefront views</span></div><div className="analytics-view-copy"><strong>{orders.length}</strong><span>orders created</span><small>{conversion.toFixed(1)}% view-to-order conversion.</small></div></div></section>
-      <section className="dash-card premium-card order-insight-card"><div className="dash-card-head"><div><h2>Order pipeline</h2><p>Live fulfilment snapshot.</p></div></div>
-        {loading?<div className="dashboard-empty-mini"><span className="save-spinner"/></div>:<div className="order-insight-list">
-          {(['new','confirmed','processing','delivering','completed'] as OrderStatus[]).map(status=><div key={status}><span className={'status-pill '+status}>{formatOrderStatus(status)}</span><strong>{orders.filter(order=>order.status===status).length}</strong></div>)}
-        </div>}
-      </section>
-    </div>
   </DashboardShell>
 }
 
@@ -539,6 +516,7 @@ export function DashboardStorePage(){
           <label><span>Instagram</span><input value={profile.instagram} onChange={e=>update('instagram',e.target.value)} placeholder="@yourbusiness"/></label>
           <label className="wide"><span>Delivery information</span><textarea value={profile.deliveryInfo} onChange={e=>update('deliveryInfo',e.target.value)} placeholder="Delivery areas, fees and pickup information"/></label>
         </div>
+        <BusinessDetailsEditor profile={profile} onChange={next=>{setProfile(next);setSaved(false)}}/>
         {storeError&&<p className="form-error">{storeError}</p>}<button className={saving?'primary-button saving':'primary-button'} onClick={()=>void persist()} disabled={saving||slugChecking||!slugMessage.valid}>{saving?<span className="save-spinner"/>:<CheckCircle2 size={17}/>} {saving?'Saving your store…':'Save changes'}</button>
         {saved&&<div className="store-save-toast"><span><Check size={18}/></span><div><strong>Store saved</strong><small>Taking you back to Overview…</small></div></div>}
       </section>

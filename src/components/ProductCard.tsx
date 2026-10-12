@@ -1,6 +1,7 @@
 import { ArrowUpRight, Check, Image, ShoppingBag } from 'lucide-react'
 import { useState } from 'react'
 import type { Product } from '../data/mock'
+import { trackShopEvent } from '../lib/traffic'
 import { addToCart } from '../lib/cart'
 
 export function ProductCard({ product }: { product: Product }) {
@@ -9,6 +10,7 @@ export function ProductCard({ product }: { product: Product }) {
   const image=product.images?.[0]||product.image
   const add = () => {
     addToCart(product)
+    void trackShopEvent(product.shopSlug,'cart_add')
     setAdded(true)
     window.setTimeout(()=>setAdded(false),1200)
   }
