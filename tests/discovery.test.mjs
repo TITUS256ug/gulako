@@ -18,6 +18,7 @@ function mockDatabase({published = true, active = true, failure = false, many = 
     assert.equal(options.headers.apikey, 'public-test-token')
     if (failure) return new Response('',{status:503})
     if (options.method === 'HEAD') return new Response(null,{headers:{'content-range':'0-0/' + (many ? 1201 : 1)}})
+    if (url.pathname.endsWith('/gulako_shop_verifications')) return Response.json([])
     if (url.pathname.endsWith('/shops')) {
       assert.equal(url.searchParams.get('published'), 'eq.true')
       return Response.json(published ? [shop] : [])
