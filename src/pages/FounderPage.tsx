@@ -126,7 +126,7 @@ export function FounderPage(){
     const note=window.prompt('Reason for '+verb+' '+shop.business_name+' (minimum 8 characters). Record how you checked its location:')
     if(note===null)return
     if(note.trim().length<8){setMessage('Please enter at least 8 characters explaining your decision.');return}
-    if(!window.confirm((verify?'Confirm you personally checked the location of ':'Revoke the verified badge for ')+shop.business_name+'?'))return
+    if(!window.confirm((verify?'Confirm this Business plan is paid and you personally checked the exact physical location of ':'Revoke the verified location badge for ')+shop.business_name+'?'))return
     setReviewingShop(shop.shop_id);setMessage('')
     try{
       const {error}=await backend.rpc('gulako_set_shop_verified',{p_shop_id:shop.shop_id,p_verified:verify,p_review_note:note.trim()})
@@ -184,7 +184,7 @@ export function FounderPage(){
       <div className="founder-card-title"><div><span className="section-kicker"><BadgeCheck size={14}/> Business plan feature</span><h2>Verified business locations</h2><p>Only mark a Business-plan shop verified after checking its physical location and directions. Changing the location or downgrading removes the badge automatically.</p></div></div>
       <div className="founder-verification-list">
         {shops.length===0?<div className="founder-empty">No shops available for location verification.</div>:shops.map(shop=><article className="founder-verification-row" key={shop.shop_id}>
-          <div className="founder-verification-info"><strong>{shop.business_name||'Unnamed business'} {shop.is_verified&&<BadgeCheck size={18} className="founder-verified-blue" aria-label="Verified location"/>}</strong><small>{shop.plan.toUpperCase()} · {userLabel(shop.owner_id)} · gulako.site/{shop.slug}</small><span><MapPin size={15}/>{shop.location||'Location missing'}</span><span>{shop.maps_link?(/https?:\/\//i.test(shop.maps_link)?<a href={shop.maps_link} target="_blank" rel="noreferrer">View supplied map</a>:<em>Plus Code: {shop.maps_link}</em>):'Map link / Plus Code missing'}</span><small>{shop.is_verified&&shop.verified_at?'Verified '+new Date(shop.verified_at).toLocaleDateString():'Not verified'}</small></div>
+          <div className="founder-verification-info"><strong>{shop.business_name||'Unnamed business'} {shop.is_verified&&<BadgeCheck size={18} className="founder-verified-blue" aria-label="Verified location"/>}</strong><small>{shop.plan.toUpperCase()} · {userLabel(shop.owner_id)} · gulako.site/{shop.slug}</small><span><MapPin size={15}/>{shop.location||'Location missing'}</span><span>{shop.maps_link?(/^https:\/\//i.test(shop.maps_link)?<a href={shop.maps_link} target="_blank" rel="noreferrer">View supplied map</a>:<em>Plus Code: {shop.maps_link}</em>):'Map link / Plus Code missing'}</span><small>{shop.is_verified&&shop.verified_at?'Verified '+new Date(shop.verified_at).toLocaleDateString():'Not verified'}</small></div>
           <div className="founder-verification-actions"><button type="button" disabled={reviewingShop===shop.shop_id||(!shop.is_verified&&(shop.plan!=='business'||!shop.location.trim()||!shop.maps_link.trim()))} className={shop.is_verified?'soft-button':'primary-button'} onClick={()=>void reviewLocation(shop,!shop.is_verified)}>{shop.is_verified?<><X size={16}/> Revoke</>:<><BadgeCheck size={17}/> Verify</>}</button></div>
         </article>)}
       </div>
