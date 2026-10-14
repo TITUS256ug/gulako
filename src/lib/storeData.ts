@@ -23,6 +23,7 @@ export type StoreProfile = {
   accent: AccentName
   accentColor: string
   cover: string
+  locationVerified: boolean
 }
 
 export type RelatedShop = {
@@ -56,7 +57,7 @@ const RESERVED_SLUGS = new Set([
 export const emptyStoreProfile: StoreProfile = {
   businessName:'', slug:'', category:'', location:'', description:'', whatsapp:'+256',
   mapsLink:'', tiktok:'', instagram:'', deliveryInfo:'', paymentNetwork:'', paymentNumber:'',
-  mtnMerchantCode:'', airtelMerchantCode:'', accent:'violet', accentColor:'#7c3aed', cover:'',
+  mtnMerchantCode:'', airtelMerchantCode:'', accent:'violet', accentColor:'#7c3aed', cover:'', locationVerified:false,
 }
 
 function safeParse<T>(key:string,fallback:T):T{
@@ -181,6 +182,7 @@ export function rowToProfile(row:any):StoreProfile{
     accent:(row.accent??'violet') as AccentName,
     accentColor:row.accent_color || accentColors[(row.accent??'violet') as AccentName],
     cover:row.cover_url??'',
+    locationVerified:false,
   }
 }
 
@@ -217,6 +219,8 @@ export async function hydrateSellerData(){
     return
   }
   const profile=rowToProfile(shop)
+  const {data:verification}=await backend.from('gulako_shop_verifications').select('shop_id').eq('shop_id',shop.id).maybeSingle()
+  profile.locationVerified=Boolean(verification)
   cacheProfile(profile)
   window.localStorage.setItem(ANALYTICS_KEY,JSON.stringify({views:Number(shop.views??40)}))
   if(shop.logo_url)window.localStorage.setItem(LOGO_KEY,shop.logo_url)
@@ -358,6 +362,8 @@ export async function fetchPublicShop(slug:string){
   if(error||!shop)return null
   const {data:rows}=await backend.from('products').select('*').eq('shop_id',shop.id).eq('active',true).order('created_at',{ascending:false})
   const profile=rowToProfile(shop)
+  const {data:verification}=await backend.from('gulako_shop_verifications').select('shop_id').eq('shop_id',shop.id).maybeSingle()
+  profile.locationVerified=Boolean(verification)
   return{
     profile,
     logo:shop.logo_url??'',
@@ -392,6 +398,8 @@ export async function fetchPublicProduct(id:string){
   const shop=(row as any).shops
   if(!shop?.published)return null
   const profile=rowToProfile(shop)
+  const {data:verification}=await backend.from('gulako_shop_verifications').select('shop_id').eq('shop_id',shop.id).maybeSingle()
+  profile.locationVerified=Boolean(verification)
   return{product:rowToProduct(row,profile.businessName,profile.slug),profile,logo:shop.logo_url??''}
 }
 
