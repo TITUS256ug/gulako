@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Boxes, CreditCard, Eye, LayoutDashboard, LogOut, Menu, Moon, Palette, Search, Settings, ShoppingBag, Sun, Users, X } from 'lucide-react'
+import { BarChart3, Bell, Boxes, Clock3, CreditCard, Eye, LayoutDashboard, LogOut, Menu, Moon, Palette, Search, Settings, Sparkles, ShoppingBag, Sun, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
@@ -13,6 +13,8 @@ import type { SellerNotification } from '../lib/orders'
 const links = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/products', label: 'Products', icon: Boxes },
+  { href: '/dashboard/ai-writer', label: 'AI Writer', icon: Sparkles },
+  { href: '/dashboard/business-details', label: 'FAQs & Hours', icon: Clock3 },
   { href: '/dashboard/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/dashboard/customers', label: 'Customers', icon: Users },
   { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },

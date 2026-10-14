@@ -151,6 +151,17 @@ export function DashboardHomePage(){
       </div>
     </section>
 
+    <section className="seller-feature-shortcuts" aria-label="Quick seller tools">
+      <a href="/dashboard/business-details" className="seller-feature-shortcut">
+        <span className="seller-shortcut-symbol"><Settings2 size={23}/></span>
+        <span><strong>FAQs & opening hours</strong><small>Answer buyer questions and set when you are open</small></span><ArrowUpRight size={18}/>
+      </a>
+      <a href="/dashboard/ai-writer" className="seller-feature-shortcut">
+        <span className="seller-shortcut-symbol"><Sparkles size={23}/></span>
+        <span><strong>AI Writer</strong><small>Create product descriptions with your Business plan</small></span><ArrowUpRight size={18}/>
+      </a>
+    </section>
+
     <section className="metric-grid premium-metrics">
       <article><span className="metric-icon"><ShoppingBag size={20}/></span><div><small>Orders</small><strong>{orders.length}</strong><em>{orders.length?'Live order data':'No orders yet'}</em></div></article>
       <article><span className="metric-icon"><TrendingUp size={20}/></span><div><small>Completed sales</small><strong>UGX {money(sales)}</strong><em>{completed.length} completed</em></div></article>
@@ -179,6 +190,16 @@ export function DashboardProductsPage(){
   const {profile,products}=useStoreSnapshot()
   const {plan,limit}=useAccountPlan()
   const [showForm,setShowForm]=useState(()=>new URLSearchParams(window.location.search).get('add')==='1')
+  const [pendingAiDraft] = useState<{name:string;category:string;description:string}|null>(()=>{
+    if(new URLSearchParams(window.location.search).get('from')!=='ai')return null
+    try {
+      const raw=window.sessionStorage.getItem('gulako_pending_ai_product_draft')
+      if(!raw)return null
+      const value=JSON.parse(raw) as {name?:string;category?:string;description?:string}
+      if(typeof value.name!=='string'||typeof value.description!=='string')return null
+      return {name:value.name,category:value.category||'',description:value.description}
+    }catch{return null}
+  })
   const [editingId,setEditingId]=useState<string|null>(null)
   const [images,setImages]=useState<string[]>([])
   const [error,setError]=useState('')
@@ -194,6 +215,7 @@ export function DashboardProductsPage(){
     window.history.replaceState({},'', product ? '/dashboard/products?edit='+product.id : '/dashboard/products?add=1')
   }
   const closeForm=()=>{
+    window.sessionStorage.removeItem('gulako_pending_ai_product_draft')
     setShowForm(false)
     setEditingId(null)
     setImages([])
@@ -249,6 +271,11 @@ export function DashboardProductsPage(){
   }
 
   return <DashboardShell title="Products" subtitle="Manage what customers see in your shop." action={<button className="primary-button" onClick={()=>openForm()}><Plus size={17}/>Add product</button>}>
+    <a href="/dashboard/ai-writer" className="seller-product-ai-banner">
+      <span><Sparkles size={23}/></span>
+      <span><strong>AI Writer — product descriptions</strong><small>Open the AI writing tool for new or existing products. Business plan feature.</small></span>
+      <ArrowUpRight size={20}/>
+    </a>
     {showForm && <section className="dash-card premium-card product-editor-card">
       <div className="dash-card-head"><div><span className="section-kicker">{editingId?'Edit product':'New product'}</span><h2>{editingId?'Edit product':'Add a product'}</h2><p>{editingId?'Update this product and save your changes.':'Products you save appear in your storefront preview.'}</p></div><button className="icon-button" onClick={closeForm} aria-label="Close"><X size={18}/></button></div>
       <form key={editingId ?? 'new-product'} className="product-editor-form" onSubmit={submit}>
@@ -266,12 +293,12 @@ export function DashboardProductsPage(){
           <input ref={inputRef} hidden multiple type="file" accept="image/png,image/jpeg,image/webp" onChange={(e:ChangeEvent<HTMLInputElement>)=>pickImages(e.target.files)}/>
         </div>
         <div className="form-grid product-form-grid">
-          <label className="wide"><span>Product name</span><input name="name" required defaultValue={editingProduct?.name ?? ''} placeholder="e.g. Classic leather bag"/></label>
-          <label><span>Category</span><input name="category" required defaultValue={editingProduct?.category ?? ''} placeholder="e.g. Fashion"/></label>
+          <label className="wide"><span>Product name</span><input name="name" required defaultValue={editingProduct?.name ?? pendingAiDraft?.name ?? ''} placeholder="e.g. Classic leather bag"/></label>
+          <label><span>Category</span><input name="category" required defaultValue={editingProduct?.category ?? pendingAiDraft?.category ?? ''} placeholder="e.g. Fashion"/></label>
           <label><span>Price (UGX)</span><input name="price" required type="number" min="1" defaultValue={editingProduct?.price ?? ''} placeholder="85000"/></label>
           <label className="negotiable-option"><span>Price option</span><span className="check-row negotiable-check"><input name="negotiable" type="checkbox" defaultChecked={Boolean(editingProduct?.negotiable)}/> Slightly negotiable</span></label>
           <label><span>Stock</span><input name="stock" type="number" min="0" defaultValue={editingProduct?.stock ?? 1}/></label>
-          <label className="wide"><span>Description</span><textarea name="description" defaultValue={editingProduct?.description ?? ''} placeholder="Tell customers about this product"/></label>
+          <label className="wide"><span>Description</span><textarea name="description" defaultValue={editingProduct?.description ?? pendingAiDraft?.description ?? ''} placeholder="Tell customers about this product"/></label>
         </div>
         <AiDescription/>
         {error&&<p className="form-error">{error}</p>}
@@ -510,6 +537,11 @@ export function DashboardStorePage(){
   const previewHref=profile.businessName&&slugMessage.valid?`/${profile.slug}`:'/dashboard/store'
 
   return <DashboardShell title="Store" subtitle="Customize how your business appears." action={<a className="soft-button" href={previewHref} target={profile.businessName&&slugMessage.valid?'_blank':undefined} rel={profile.businessName&&slugMessage.valid?'noreferrer':undefined}><Eye size={17}/> Preview shop</a>}>
+    <a className="seller-product-ai-banner" href="/dashboard/business-details">
+      <span><Settings2 size={23}/></span>
+      <span><strong>FAQs & opening hours</strong><small>Use the dedicated editor to publish common questions and operating times.</small></span>
+      <ArrowUpRight size={20}/>
+    </a>
     <div className="dashboard-two-col store-editor-layout">
       <section className="dash-card premium-card form-card">
         <div className="store-card-title"><div><h2>Store profile</h2><p>These details appear on your storefront.</p></div>{saved&&<span className="save-success"><Check size={14}/> Saved</span>}</div>
