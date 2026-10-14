@@ -14,6 +14,7 @@ import { OrderTrackPage } from './pages/OrderTrackPage'
 import { ProductPage } from './pages/ProductPage'
 import { ShopPage } from './pages/ShopPage'
 import { PrivacyPage, TermsPage } from './pages/LegalPages'
+import { PricingPage } from './pages/PricingPage'
 
 export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
@@ -21,7 +22,7 @@ export default function App() {
   if (path === '/') return <HomePage />
   if (path === '/demo') return <DemoShopPage />
   if (path === '/explore') { window.location.replace('/'); return null }
-  if (path === '/pricing') { window.location.replace('/signin'); return null }
+  if (path === '/pricing') return <PricingPage />
   if (path === '/signin' || path === '/login') return <AuthPage mode="signin" />
   if (path === '/auth/callback') return <AuthCallbackPage />
   if (path === '/signup' || path === '/register') return <AuthPage mode="signup" />
