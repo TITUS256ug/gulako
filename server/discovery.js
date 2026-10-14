@@ -49,7 +49,7 @@ export function businessSchema(shop) {
     '@context':'https://schema.org', '@type': shop.location ? 'LocalBusiness' : 'OnlineStore',
     '@id':url + '#business', name:shop.business_name, url,
     description:cleanText(shop.description) || undefined,
-    openingHoursSpecification:(shop.opening_hours||[]).map(h=>({'@type':'OpeningHoursSpecification',dayOfWeek:'https://schema.org/'+h.day,opens:h.status==='closed'?'00:00':h.opens,closes:h.status==='closed'?'00:00':h.closes})),
+    openingHoursSpecification:(shop.opening_hours||[]).filter(h=>h.status==='open').map(h=>({'@type':'OpeningHoursSpecification',dayOfWeek:'https://schema.org/'+h.day,opens:h.opens,closes:h.closes})),
     address:cleanText(shop.location) || undefined,
     telephone:/^\+?[\d\s()-]{7,}$/.test(shop.whatsapp || '') ? shop.whatsapp : undefined,
     image:safeUrl(shop.cover_url) || safeUrl(shop.logo_url), logo:safeUrl(shop.logo_url),
