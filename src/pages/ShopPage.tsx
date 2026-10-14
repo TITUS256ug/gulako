@@ -1,4 +1,4 @@
-import { ExternalLink, Instagram, Link2, Map, MapPin, MessageCircle, Search, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
+import { BadgeCheck, ExternalLink, Instagram, Link2, Map, MapPin, MessageCircle, Search, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, CSSProperties } from 'react'
 import { Footer } from '../components/Footer'
@@ -93,7 +93,8 @@ export function ShopPage({ slug, initialData = readDiscoveryData<PublicShopData>
             </div>
             <div>
               <span className="premium-shop-eyebrow"><Sparkles size={14}/> Welcome to {profile.businessName}</span>
-              <h1>{profile.businessName}</h1>
+              <h1>{profile.businessName}{profile.locationVerified&&<span className="verified-location-mark" title="Business location verified by Gulako" aria-label="Business location verified by Gulako"><BadgeCheck size={25}/></span>}</h1>
+              {profile.locationVerified&&<span className="verified-location-caption"><BadgeCheck size={15}/> Gulako verified location</span>}
               {profile.description&&<p>{profile.description}</p>}
               <div className="premium-shop-meta">
                 {profile.category&&<span><Store size={16}/>{profile.category}</span>}

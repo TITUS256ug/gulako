@@ -34,7 +34,8 @@ export default async function handler(req, res) {
         if (product) [shop] = await publicRows('shops', {select:SHOP_FIELDS, id:'eq.' + product.shop_id, published:'eq.true', limit:1})
       }
       if (shop) {
-        const profile = rowToProfile(shop)
+        const [verifiedRecord] = await publicRows('gulako_shop_verifications', {select:'shop_id',shop_id:'eq.' + shop.id,limit:1})
+        const profile = {...rowToProfile(shop),locationVerified:Boolean(verifiedRecord)}
         const logo = safeUrl(shop.logo_url) || ''
         if (kind === 'shop') {
           const products = await allShopProducts(shop.id)

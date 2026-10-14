@@ -1,4 +1,4 @@
-import { Check, Crown, Landmark, Save, Search, ShieldCheck, Smartphone, X } from 'lucide-react'
+import { BadgeCheck, Check, Crown, Landmark, MapPin, Save, Search, ShieldCheck, Smartphone, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { backend } from '../lib/backend'
 
@@ -8,6 +8,17 @@ type Row={
   full_name:string|null
   role:string
   plan:'free'|'pro'|'business'
+}
+type VerifiedShopRow={
+  shop_id:string
+  owner_id:string
+  business_name:string
+  slug:string
+  location:string
+  maps_link:string
+  plan:'free'|'pro'|'business'
+  is_verified:boolean
+  verified_at:string|null
 }
 type BillingSettings={
   mtn_merchant_code:string
@@ -38,6 +49,8 @@ const blankBilling:BillingSettings={mtn_merchant_code:'',airtel_merchant_code:''
 export function FounderPage(){
   const [rows,setRows]=useState<Row[]>([])
   const [requests,setRequests]=useState<UpgradeRequest[]>([])
+  const [shops,setShops]=useState<VerifiedShopRow[]>([])
+  const [reviewingShop,setReviewingShop]=useState<string|null>(null)
   const [billing,setBilling]=useState<BillingSettings>(blankBilling)
   const [query,setQuery]=useState('')
   const [state,setState]=useState<'loading'|'denied'|'ready'>('loading')
@@ -49,14 +62,17 @@ export function FounderPage(){
     if(!user){window.location.replace('/signin');return}
     const {data:me}=await backend.from('profiles').select('role').eq('id',user.id).maybeSingle()
     if(me?.role!=='founder'&&me?.role!=='admin'){setState('denied');return}
-    const [{data:profiles},{data:settings},{data:upgradeRows}]=await Promise.all([
+    const [{data:profiles},{data:settings},{data:upgradeRows},{data:verifiedShops,error:shopsError}]=await Promise.all([
       backend.from('profiles').select('id,email,full_name,role,plan').order('created_at',{ascending:false}),
       backend.from('billing_settings').select('mtn_merchant_code,airtel_merchant_code,bank_name,bank_account_name,bank_account_number,bank_swift,bank_country,bank_branch,bank_currency').eq('id',true).maybeSingle(),
       backend.from('plan_upgrade_requests').select('id,user_id,requested_plan,payment_method,transaction_ref,note,status,created_at,currency,amount').order('created_at',{ascending:false}).limit(30),
+      backend.rpc('gulako_founder_shops_for_verification'),
     ])
     setRows((profiles??[]) as Row[])
     if(settings)setBilling({...blankBilling,...settings})
     setRequests((upgradeRows??[]) as UpgradeRequest[])
+    if(!shopsError)setShops((verifiedShops??[]) as VerifiedShopRow[])
+    else setMessage('Verification list unavailable: '+shopsError.message)
     setState('ready')
   }
 
@@ -101,6 +117,26 @@ export function FounderPage(){
     setMessage(status==='approved'?'Payment approved and plan activated.':'Upgrade request rejected.')
   }
 
+  const reviewLocation=async(shop:VerifiedShopRow,verify:boolean)=>{
+    if(verify && (shop.plan!=='business'||!shop.location.trim()||!shop.maps_link.trim())){
+      setMessage('Only Business-plan shops with a location and Maps link / Plus Code can be verified.')
+      return
+    }
+    const verb=verify?'verify':'revoke verification for'
+    const note=window.prompt('Reason for '+verb+' '+shop.business_name+' (minimum 8 characters). Record how you checked its location:')
+    if(note===null)return
+    if(note.trim().length<8){setMessage('Please enter at least 8 characters explaining your decision.');return}
+    if(!window.confirm((verify?'Confirm this Business plan is paid and you personally checked the exact physical location of ':'Revoke the verified location badge for ')+shop.business_name+'?'))return
+    setReviewingShop(shop.shop_id);setMessage('')
+    try{
+      const {error}=await backend.rpc('gulako_set_shop_verified',{p_shop_id:shop.shop_id,p_verified:verify,p_review_note:note.trim()})
+      if(error)throw error
+      setMessage(verify?'Business location verified.':'Business location verification revoked.')
+      await load()
+    }catch(err){setMessage(err instanceof Error?err.message:'Could not change verification.')}
+    finally{setReviewingShop(null)}
+  }
+
   const userLabel=(id:string)=>{
     const row=rows.find(item=>item.id===id)
     return row ? (row.full_name||row.email) : 'Seller'
@@ -140,6 +176,16 @@ export function FounderPage(){
         {requests.filter(item=>item.status==='pending').length===0?<div className="founder-empty">No pending upgrade requests.</div>:requests.filter(item=>item.status==='pending').map(item=><article key={item.id}>
           <div><strong>{userLabel(item.user_id)}</strong><small>{item.requested_plan.toUpperCase()} · {item.currency} {item.amount??''} · {item.payment_method.toUpperCase()} · {item.transaction_ref}</small>{item.note&&<em>{item.note}</em>}</div>
           <div className="founder-request-actions"><button className="approve" onClick={()=>void review(item,'approved')}><Check size={15}/> Approve</button><button className="reject" onClick={()=>void review(item,'rejected')}><X size={15}/> Reject</button></div>
+        </article>)}
+      </div>
+    </section>
+
+    <section className="founder-card">
+      <div className="founder-card-title"><div><span className="section-kicker"><BadgeCheck size={14}/> Business plan feature</span><h2>Verified business locations</h2><p>Only mark a Business-plan shop verified after checking its physical location and directions. Changing the location or downgrading removes the badge automatically.</p></div></div>
+      <div className="founder-verification-list">
+        {shops.length===0?<div className="founder-empty">No shops available for location verification.</div>:shops.map(shop=><article className="founder-verification-row" key={shop.shop_id}>
+          <div className="founder-verification-info"><strong>{shop.business_name||'Unnamed business'} {shop.is_verified&&<BadgeCheck size={18} className="founder-verified-blue" aria-label="Verified location"/>}</strong><small>{shop.plan.toUpperCase()} · {userLabel(shop.owner_id)} · gulako.site/{shop.slug}</small><span><MapPin size={15}/>{shop.location||'Location missing'}</span><span>{shop.maps_link?(/^https:\/\//i.test(shop.maps_link)?<a href={shop.maps_link} target="_blank" rel="noreferrer">View supplied map</a>:<em>Plus Code: {shop.maps_link}</em>):'Map link / Plus Code missing'}</span><small>{shop.is_verified&&shop.verified_at?'Verified '+new Date(shop.verified_at).toLocaleDateString():'Not verified'}</small></div>
+          <div className="founder-verification-actions"><button type="button" disabled={reviewingShop===shop.shop_id||(!shop.is_verified&&(shop.plan!=='business'||!shop.location.trim()||!shop.maps_link.trim()))} className={shop.is_verified?'soft-button':'primary-button'} onClick={()=>void reviewLocation(shop,!shop.is_verified)}>{shop.is_verified?<><X size={16}/> Revoke</>:<><BadgeCheck size={17}/> Verify</>}</button></div>
         </article>)}
       </div>
     </section>
