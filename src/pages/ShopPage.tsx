@@ -1,6 +1,8 @@
 import { BadgeCheck, ExternalLink, Instagram, Link2, Map, MapPin, MessageCircle, Search, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, CSSProperties } from 'react'
+import { BusinessDetails } from '../components/BusinessDetails'
+import { trackShopEvent } from '../lib/traffic'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { ProductCard } from '../components/ProductCard'
@@ -25,13 +27,13 @@ export function ShopPage({ slug, initialData = readDiscoveryData<PublicShopData>
 
   useEffect(()=>{
     let active=true
-    if(initialData !== undefined){if(initialData && slug)void recordStoreView(slug);return}
+    if(initialData !== undefined){if(initialData && slug){void recordStoreView(slug);void trackShopEvent(slug,'shop_view')}return}
     if(!slug){setReady(true);return}
     fetchPublicShop(slug).then(async data=>{
       if(!active)return
       setShop(data)
       setReady(true)
-      if(data)void recordStoreView(slug)
+      if(data){void recordStoreView(slug);void trackShopEvent(slug,'shop_view')}
     })
     return()=>{active=false}
   },[slug])
@@ -106,13 +108,14 @@ export function ShopPage({ slug, initialData = readDiscoveryData<PublicShopData>
 
           <div className="premium-shop-actions">
             <button className="premium-share" onClick={shareShop}><Link2 size={17}/> Share shop</button>
-            {whatsappHref&&<a className="premium-whatsapp-button" href={whatsappHref} target="_blank" rel="noreferrer"><MessageCircle size={17}/> Chat on WhatsApp</a>}
+            {whatsappHref&&<a className="premium-whatsapp-button" href={whatsappHref} onClick={()=>void trackShopEvent(profile.slug,'whatsapp_click')} target="_blank" rel="noreferrer"><MessageCircle size={17}/> Chat on WhatsApp</a>}
             {profile.mapsLink&&<a href={profile.mapsLink} target="_blank" rel="noreferrer"><Map size={17}/> Directions <ExternalLink size={12}/></a>}
             {instagramUrl&&<a href={instagramUrl} target="_blank" rel="noreferrer"><Instagram size={17}/> Instagram</a>}
           </div>
         </section>
 
         {profile.deliveryInfo&&<section className="shop-delivery-details"><h2>Delivery & pickup</h2><p>{profile.deliveryInfo}</p></section>}
+        <BusinessDetails profile={profile}/>
         <section className="premium-catalog-shell">
           <div className="catalog-heading-row premium-catalog-head">
             <div>
