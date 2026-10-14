@@ -14,7 +14,7 @@ import { OrderTrackPage } from './pages/OrderTrackPage'
 import { ProductPage } from './pages/ProductPage'
 import { ShopPage } from './pages/ShopPage'
 import { PrivacyPage, TermsPage } from './pages/LegalPages'
-import { PricingPage } from './pages/PricingPage'
+import { PricingPage } from './pages/HomePage'
 
 export default function App() {
   const path = window.location.pathname.replace(/\/+$/, '') || '/'
