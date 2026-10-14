@@ -1,4 +1,6 @@
 import { TrafficPage } from './pages/TrafficPage'
+import { AiWriterPage } from './pages/AiWriterPage'
+import { BusinessDetailsPage } from './pages/BusinessDetailsPage'
 import { DiscoveryPage } from './pages/DiscoveryPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from './pages/AuthPage'
@@ -37,6 +39,8 @@ export default function App() {
   if (path === '/dashboard/discovery') return <ProtectedRoute><DiscoveryPage /></ProtectedRoute>
   if (path === '/dashboard') return <ProtectedRoute><DashboardHomePage /></ProtectedRoute>
   if (path === '/dashboard/products') return <ProtectedRoute><DashboardProductsPage /></ProtectedRoute>
+  if (path === '/dashboard/ai-writer') return <ProtectedRoute><AiWriterPage /></ProtectedRoute>
+  if (path === '/dashboard/business-details') return <ProtectedRoute><BusinessDetailsPage /></ProtectedRoute>
   if (path === '/dashboard/orders') return <ProtectedRoute><DashboardOrdersPage /></ProtectedRoute>
   if (path === '/dashboard/customers') return <ProtectedRoute><DashboardCustomersPage /></ProtectedRoute>
   if (path === '/dashboard/analytics') return <ProtectedRoute><TrafficPage /></ProtectedRoute>
