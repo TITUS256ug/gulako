@@ -1245,3 +1245,18 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
   .store-location-verification a,.founder-verification-actions,.founder-verification-actions button{width:100%}
   .billing-current-plan .current-plan-pill{align-self:flex-start}
 }
+
+
+/* Business growth v1.1 */
+.business-details-editor{margin:28px 0;padding-top:24px;border-top:1px solid var(--border)}
+.business-details-editor h3{margin:22px 0 8px}.business-details-editor p{line-height:1.6;margin:8px 0 20px}
+.business-details-editor label,.ai-description label{display:grid;gap:8px;margin:12px 0;font-weight:600}
+.business-details-editor input,.business-details-editor select,.business-details-editor textarea,.ai-description textarea{width:100%;min-width:0;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font:inherit}
+.hours-editor{margin:20px 0}.hours-editor-row{display:grid;grid-template-columns:1fr 1.1fr 1fr 1fr;gap:10px;align-items:center;padding:10px 0}
+.faq-editor{padding:16px;background:var(--surface-2);border-radius:16px;margin:12px 0}
+.public-business-details{display:grid;grid-template-columns:1fr 1.5fr;gap:32px;padding:25px 0}.public-business-details h2{font-size:22px;margin-bottom:12px}
+.business-hours>div{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid var(--border);padding:12px 0}.business-hours dd{margin:0;text-align:right}
+.business-faqs details{border-bottom:1px solid var(--border);padding:18px 0}.business-faqs summary{cursor:pointer;font-weight:700;line-height:1.5}.business-faqs p{white-space:pre-line;line-height:1.7;padding-top:12px}
+.ai-description{padding:24px;border-radius:18px;background:var(--purple-soft);margin:20px 0}.ai-description h3{display:flex;gap:8px;align-items:center}.ai-description p{line-height:1.6}.ai-description small{display:block;margin-top:10px}.ai-draft{margin-top:20px}.ai-draft textarea{min-height:160px}.ai-draft .text-button{margin-left:18px}
+.traffic-actions>div{display:flex;justify-content:space-between;gap:16px;padding:18px 0;border-bottom:1px solid var(--border)}.traffic-table{overflow-x:auto}.traffic-table table{border-collapse:collapse;width:100%}.traffic-table th,.traffic-table td{padding:16px 12px;text-align:left;border-bottom:1px solid var(--border)}.traffic-notes{margin-top:24px}.traffic-notes p{line-height:1.7;margin:14px 0}
+@media(max-width:700px){.public-business-details{grid-template-columns:1fr;gap:24px}.hours-editor-row{grid-template-columns:1fr 1fr}.hours-editor-row input{min-width:0}.ai-description{padding:18px}}
