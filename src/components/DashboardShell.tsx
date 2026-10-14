@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Boxes, Clock3, CreditCard, Eye, HelpCircle, LayoutDashboard, LogOut, Menu, Moon, Palette, Search, Settings, Sparkles, ShoppingBag, Sun, Users, X } from 'lucide-react'
+import { BarChart3, Bell, Boxes, Clock3, CreditCard, Eye, LayoutDashboard, LogOut, Menu, Moon, Palette, Search, Settings, Sparkles, ShoppingBag, Sun, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
