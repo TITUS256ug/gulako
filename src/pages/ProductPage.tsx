@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, MessageCircle, PackageSearch, ShieldCheck, ShoppingBag, Sparkles, Truck } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Check, MessageCircle, PackageSearch, ShieldCheck, ShoppingBag, Sparkles, Truck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Footer } from '../components/Footer'
@@ -80,7 +80,7 @@ export function ProductPage({ id, initialData = readDiscoveryData<ProductData>("
       <div className="product-detail-copy premium-product-copy">
         <div className="product-shop-identity">
           {logo?<img src={logo} alt={profile.businessName}/>:<span>{profile.businessName.slice(0,1).toUpperCase()}</span>}
-          <div><small>Sold by</small><a href={'/'+profile.slug}>{profile.businessName||product.shopName}</a></div>
+          <div><small>Sold by</small><a href={'/'+profile.slug}>{profile.businessName||product.shopName}</a>{profile.locationVerified&&<span className="verified-location-mark compact" title="Business location verified by Gulako" aria-label="Business location verified by Gulako"><BadgeCheck size={18}/></span>}</div>
         </div>
 
         <span className="category-chip inline-chip">{product.category}</span>
