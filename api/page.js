@@ -3,7 +3,7 @@ import { renderShop, renderProduct, renderStatic, rowToProfile, rowToProduct } f
 import { SITE, SHOP_FIELDS, PRODUCT_FIELDS, publicRows, allShopProducts, businessSchema, productSchema, cleanText, safeUrl, renderDocument } from '../server/discovery.js'
 
 let template
-const PRIVATE = new Set(['signin','login','signup','register','dashboard','cart','checkout','order','pricing','explore','demo','founder','onboarding','auth','admin','settings','shop'])
+const PRIVATE = new Set(['signin','login','signup','register','dashboard','cart','checkout','order','explore','demo','founder','onboarding','auth','admin','settings','shop'])
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export default async function handler(req, res) {
@@ -18,9 +18,9 @@ export default async function handler(req, res) {
     const parts = path.split('/').filter(Boolean)
     let meta = {title:'Gulako — Take your shop online. Sell faster.', description:'Storefront, orders, and customers in one place.', url:SITE + path}
     let body = '', payload, status = 200
-    if (path === '/' || path === '/terms' || path === '/privacy') {
+    if (path === '/' || path === '/terms' || path === '/privacy' || path === '/pricing') {
       body = renderStatic(path)
-      if (path !== '/') meta = {...meta, title:(path === '/terms' ? 'Terms of service' : 'Privacy policy') + ' | Gulako'}
+      if (path !== '/') meta = {...meta, title:(path === '/terms' ? 'Terms of service' : path === '/privacy' ? 'Privacy policy' : 'Pricing and plans') + ' | Gulako', description:path === '/pricing' ? 'Compare Gulako Free, Pro and Business plans. Start your online shop free and upgrade when you need more.' : meta.description}
       else meta.schema = {'@context':'https://schema.org','@type':'WebSite', name:'Gulako', url:SITE + '/'}
     } else if (PRIVATE.has(parts[0])) {
       meta.noindex = true
