@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Boxes, CreditCard, Eye, LayoutDashboard, LogOut, Moon, Palette, Search, Settings, ShoppingBag, Sun, Users } from 'lucide-react'
+import { BarChart3, Bell, Boxes, CreditCard, Eye, LayoutDashboard, LogOut, Menu, Moon, Palette, Search, Settings, ShoppingBag, Sun, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
@@ -31,6 +31,20 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   const [dark,setDark]=useState(()=>getTheme()==='dark')
   const [notifications,setNotifications]=useState<SellerNotification[]>([])
   const [notificationsOpen,setNotificationsOpen]=useState(false)
+  const [mobileMenuOpen,setMobileMenuOpen]=useState(false)
+
+  const signOut=async()=>{
+    await backend.auth.signOut()
+    clearSellerLocalData()
+    window.location.replace('/signin')
+  }
+
+  useEffect(()=>{
+    if(!mobileMenuOpen)return
+    const dismiss=(event:KeyboardEvent)=>{if(event.key==='Escape')setMobileMenuOpen(false)}
+    window.addEventListener('keydown',dismiss)
+    return()=>window.removeEventListener('keydown',dismiss)
+  },[mobileMenuOpen])
 
   useEffect(()=>{
     applyTheme(dark?'dark':'light')
@@ -104,13 +118,14 @@ export function DashboardShell({ children, title, subtitle, action }: { children
           {(role==='founder'||role==='admin')&&<a href="/founder"><Settings size={18}/><span>Founder</span></a>}
         </nav>
         <div className="sidebar-bottom">
-          <button className="sidebar-signout" onClick={async()=>{clearSellerLocalData();await backend.auth.signOut();window.location.replace('/signin')}}><LogOut size={18} /> <span>Sign out</span></button>
+          <button className="sidebar-signout" onClick={()=>void signOut()}><LogOut size={18} /> <span>Sign out</span></button>
         </div>
       </aside>
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           <div><p className="eyebrow">Seller workspace</p><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
           <div className="dashboard-top-actions">
+            <button type="button" className="icon-button mobile-signout-topbar" onClick={()=>void signOut()} aria-label="Sign out" title="Sign out"><LogOut size={18}/></button>
             <span className="dashboard-install"><InstallAppButton compact/></span>
             <button className="icon-button dashboard-theme-toggle" onClick={()=>setDark(value=>!value)} aria-label={dark?'Use light mode':'Use dark mode'} title={dark?'Use light mode':'Use dark mode'}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button>
             <div className="notification-wrap">
@@ -125,6 +140,25 @@ export function DashboardShell({ children, title, subtitle, action }: { children
         </header>
         {children}
       </main>
+      <nav className="mobile-dashboard-nav" aria-label="Seller mobile navigation">
+        <a className={path==='/dashboard'?'active':''} href="/dashboard"><LayoutDashboard size={20}/><span>Home</span></a>
+        <a className={path==='/dashboard/products'?'active':''} href="/dashboard/products"><Boxes size={20}/><span>Products</span></a>
+        <a className={path==='/dashboard/orders'?'active':''} href="/dashboard/orders"><ShoppingBag size={20}/><span>Orders</span></a>
+        <a className={path==='/dashboard/billing'?'active':''} href="/dashboard/billing"><CreditCard size={20}/><span>Billing</span></a>
+        <button type="button" className={mobileMenuOpen?'active':''} aria-expanded={mobileMenuOpen} aria-controls="gulako-seller-more" onClick={()=>setMobileMenuOpen(v=>!v)}>{mobileMenuOpen?<X size={20}/>:<Menu size={20}/>}<span>More</span></button>
+      </nav>
+      {mobileMenuOpen&&<>
+        <button className="mobile-dashboard-scrim" aria-label="Close seller menu" onClick={()=>setMobileMenuOpen(false)}/>
+        <div className="mobile-dashboard-drawer" id="gulako-seller-more" role="dialog" aria-label="Seller navigation">
+          <div className="mobile-dashboard-drawer-head"><strong>Seller menu</strong><button type="button" aria-label="Close menu" onClick={()=>setMobileMenuOpen(false)}><X size={19}/></button></div>
+          <nav aria-label="All seller pages">
+            {links.map(({href,label,icon:Icon})=><a key={href} href={href} className={path===href?'active':''}><Icon size={19}/>{label}</a>)}
+            <a href={previewHref} target={hasPublishedShop?'_blank':undefined} rel={hasPublishedShop?'noreferrer':undefined}><Eye size={19}/>{hasPublishedShop?'View shop':'Set up shop'}</a>
+            {(role==='founder'||role==='admin')&&<a href="/founder"><Settings size={19}/>Founder</a>}
+          </nav>
+          <button className="mobile-dashboard-signout" type="button" onClick={()=>void signOut()}><LogOut size={19}/> Sign out</button>
+        </div>
+      </>}
     </div>
   )
 }

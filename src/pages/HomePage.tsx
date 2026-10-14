@@ -1,6 +1,7 @@
 import { ArrowRight, Store } from 'lucide-react'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
+import { PricingSection } from '../components/PricingSection'
 
 export function HomePage() {
   return (
@@ -29,6 +30,19 @@ export function HomePage() {
             </div>
           </div>
         </section>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
+export function PricingPage() {
+  return (
+    <div className="app-shell">
+      <Header />
+      <main className="page-container">
+        <PricingSection />
+        <p className="public-pricing-note">All prices are monthly. Start with a free shop, then sign in to your dashboard to request an upgrade. Paid plans are activated after payment verification.</p>
       </main>
       <Footer />
     </div>

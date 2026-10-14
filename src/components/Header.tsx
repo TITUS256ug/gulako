@@ -38,6 +38,7 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
         )}
 
         <div className="header-actions">
+          {!compact && <a className="header-pricing" href="/pricing">Pricing</a>}
           <button className="icon-button subtle-icon" onClick={() => setDark(v => !v)} aria-label="Toggle theme">
             {dark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -47,14 +48,15 @@ export function Header({ onSearch, compact = false }: HeaderProps) {
           </a>
           <a className="primary-button header-login" href="/signin">Login</a>
           <a className="soft-button header-cta" href="/signup"><Store size={17} /> Start selling</a>
-          <button className="mobile-menu-button" onClick={() => setOpen(v => !v)} aria-label="Open menu">
+          <button className="mobile-menu-button" onClick={() => setOpen(v => !v)} aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="gulako-mobile-menu">
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
 
       {open && (
-        <div className="mobile-menu">
+        <div className="mobile-menu" id="gulako-mobile-menu">
+          {!compact && <a href="/pricing">Pricing</a>}
           <a href="/signin">Sign in</a>
           <a href="/signup">Start selling</a>
         </div>
