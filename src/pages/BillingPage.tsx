@@ -4,6 +4,7 @@ import { DashboardShell } from '../components/DashboardShell'
 import { backend } from '../lib/backend'
 
 type Plan='pro'|'business'
+type CurrentPlan='free'|Plan
 type Currency='UGX'|'USD'
 type Method='mtn'|'bank'
 
@@ -48,6 +49,8 @@ const planName:Record<Plan,string>={pro:'Pro',business:'Business'}
 export function BillingPage(){
   const initialPlan=new URLSearchParams(window.location.search).get('plan')
   const [plan,setPlan]=useState<Plan>(initialPlan==='business'?'business':'pro')
+  const [currentPlan,setCurrentPlan]=useState<CurrentPlan|null>(null)
+  const [planError,setPlanError]=useState(false)
   const [currency,setCurrency]=useState<Currency>('UGX')
   const [method,setMethod]=useState<Method>('mtn')
   const [settings,setSettings]=useState<BillingSettings>(blankSettings)
@@ -60,10 +63,15 @@ export function BillingPage(){
 
   useEffect(()=>{
     void (async()=>{
-      const [{data:billing},{data:history}]=await Promise.all([
+      const {data:{user}}=await backend.auth.getUser()
+      if(!user){setPlanError(true);return}
+      const [{data:billing},{data:history},{data:account,error:accountError}]=await Promise.all([
         backend.from('billing_settings').select('mtn_merchant_code,bank_name,bank_account_name,bank_account_number,bank_swift,bank_country,bank_branch,bank_currency').eq('id',true).maybeSingle(),
         backend.from('plan_upgrade_requests').select('id,requested_plan,payment_method,transaction_ref,status,created_at,currency,amount').order('created_at',{ascending:false}).limit(5),
+        backend.from('profiles').select('plan').eq('id',user.id).maybeSingle(),
       ])
+      if(accountError||!account?.plan)setPlanError(true)
+      else setCurrentPlan(account.plan as CurrentPlan)
       if(billing)setSettings({...blankSettings,...billing})
       if(history)setRequests(history as UpgradeRequest[])
     })()
@@ -115,6 +123,10 @@ export function BillingPage(){
   }
 
   return <DashboardShell title="Billing" subtitle="Choose local or international payment.">
+    <section className="dash-card premium-card billing-current-plan" aria-label="Current subscription plan">
+      <div><span className="section-kicker">Your subscription</span><h2>Current plan</h2><p>{planError?'We could not load your subscription. Please refresh and try again.':currentPlan===null?'Checking your subscription…':currentPlan==='free'?'Your Free plan includes up to 100 active products and unlimited orders.':currentPlan==='pro'?'Your Pro plan includes unlimited products and orders.':'Your Business plan includes unlimited products and Business features, including eligibility for founder-reviewed location verification.'}</p></div>
+      <span className="current-plan-pill">{planError?'Unavailable':currentPlan===null?'Loading…':currentPlan.charAt(0).toUpperCase()+currentPlan.slice(1)}</span>
+    </section>
     <div className="billing-currency-toggle">
       <button className={currency==='UGX'?'active':''} onClick={()=>setCurrency('UGX')}><Smartphone size={16}/> Uganda · UGX</button>
       <button className={currency==='USD'?'active':''} onClick={()=>setCurrency('USD')}><Globe2 size={16}/> International · USD</button>
