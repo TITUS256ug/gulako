@@ -28,6 +28,7 @@ returns boolean language sql stable security definer set search_path=public,pg_t
   select exists (
     select 1 from public.shops s join public.profiles p on p.id=s.owner_id
     where s.id=p_shop_id and s.published is true and p.plan='business'
+      and (p.plan_expires_at is null or p.plan_expires_at > now())
       and nullif(btrim(s.location),'') is not null
       and nullif(btrim(s.maps_link),'') is not null
       and s.location is not distinct from p_location
@@ -80,12 +81,12 @@ begin
   if p_shop_id is null or p_verified is null or length(note_clean)<8 or length(note_clean)>500 then
     raise exception 'Provide a shop, a decision and an 8-500 character review note';
   end if;
-  select sh.location,sh.maps_link,sh.published,p.plan
+  select sh.location,sh.maps_link,sh.published,p.plan,p.plan_expires_at
   into s from public.shops sh join public.profiles p on p.id=sh.owner_id
   where sh.id=p_shop_id for update of sh;
   if not found then raise exception 'Shop not found'; end if;
   if p_verified then
-    if s.plan<>'business' or s.published is not true
+    if s.plan<>'business' or (s.plan_expires_at is not null and s.plan_expires_at <= now()) or s.published is not true
       or nullif(btrim(s.location),'') is null or nullif(btrim(s.maps_link),'') is null then
       raise exception 'A published Business-plan shop with complete location and directions is required';
     end if;
