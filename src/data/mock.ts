@@ -59,6 +59,6 @@ export const pricing = [
     suffix: '/mo',
     note: 'Scale with tools',
     featured: false,
-    features: ['Unlimited products', 'Unlimited orders', 'Everything in Pro', 'AI business tools'],
+    features: ['Unlimited products', 'Unlimited orders', 'Everything in Pro', 'AI business tools', 'Verified location badge (after review)'],
   },
 ]
