@@ -1,3 +1,4 @@
+import { TrafficPage } from './pages/TrafficPage'
 import { DiscoveryPage } from './pages/DiscoveryPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AuthPage } from './pages/AuthPage'
@@ -5,7 +6,7 @@ import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { BillingPage } from './pages/BillingPage'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
-import { DashboardAnalyticsPage, DashboardCustomersPage, DashboardHomePage, DashboardOrdersPage, DashboardProductsPage, DashboardSettingsPage, DashboardStorePage } from './pages/DashboardPages'
+import { DashboardCustomersPage, DashboardHomePage, DashboardOrdersPage, DashboardProductsPage, DashboardSettingsPage, DashboardStorePage } from './pages/DashboardPages'
 import { DemoShopPage } from './pages/DemoShopPage'
 import { FounderPage } from './pages/FounderPage'
 import { HomePage } from './pages/HomePage'
@@ -38,7 +39,7 @@ export default function App() {
   if (path === '/dashboard/products') return <ProtectedRoute><DashboardProductsPage /></ProtectedRoute>
   if (path === '/dashboard/orders') return <ProtectedRoute><DashboardOrdersPage /></ProtectedRoute>
   if (path === '/dashboard/customers') return <ProtectedRoute><DashboardCustomersPage /></ProtectedRoute>
-  if (path === '/dashboard/analytics') return <ProtectedRoute><DashboardAnalyticsPage /></ProtectedRoute>
+  if (path === '/dashboard/analytics') return <ProtectedRoute><TrafficPage /></ProtectedRoute>
   if (path === '/dashboard/store') return <ProtectedRoute><DashboardStorePage /></ProtectedRoute>
   if (path === '/dashboard/billing') return <ProtectedRoute><BillingPage /></ProtectedRoute>
   if (path === '/dashboard/settings') return <ProtectedRoute><DashboardSettingsPage /></ProtectedRoute>
