@@ -1,3 +1,4 @@
+import { getTrafficVisit, trackShopEvent } from './traffic'
 import { backend } from './backend'
 
 export type OrderStatus='new'|'confirmed'|'processing'|'delivering'|'completed'|'cancelled'
@@ -119,7 +120,9 @@ export async function placePublicOrder(input:{
   paymentReference:string
   items:Array<{productId:string;quantity:number}>
 }){
-  const {data,error}=await backend.rpc('create_public_order',{
+  await trackShopEvent(input.shopSlug,'checkout_start')
+  const {data,error}=await backend.rpc('create_attributed_order',{
+    visit_token:getTrafficVisit(input.shopSlug)?.id??null,
     shop_slug:input.shopSlug,
     buyer_name:input.customerName,
     buyer_phone:input.customerPhone,

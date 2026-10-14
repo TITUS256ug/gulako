@@ -38,9 +38,9 @@ export function PrivacyPage(){
       <h2>4. Payments</h2>
       <p>Gulako may display seller or Gulako merchant and bank details for direct payment. Gulako does not ask customers for Mobile Money PINs, banking passwords or OTPs.</p>
       <h2>5. Storage and service providers</h2>
-      <p>Gulako uses service providers such as Supabase and Vercel to host authentication, databases, storage and the application. These providers process information as needed to deliver the service.</p>
+      <p>Gulako uses service providers such as Supabase and Vercel to host authentication, databases, storage and the application. These providers process information as needed to deliver the service. If a seller requests an AI product description, the product name, category, existing description and facts they submit are sent through Vercel AI Gateway to a model provider. AI drafts are not published until the seller reviews and saves them.</p>
       <h2>6. Browser storage</h2>
-      <p>Gulako may use local browser storage to remember settings such as theme, cart contents and temporary app preferences.</p>
+      <p>Gulako uses browser storage for settings, cart contents and a random, shop-specific visitor-session identifier. Measured reports record page and shopping actions, a coarse referral source and optional campaign label; Gulako does not send full referrer URLs or customer contact details with these events. Sessions expire after 30 minutes of inactivity. Browsers sending Do Not Track and signed-in shop-owner previews are excluded from the new reporting. Orders may be linked to the current session when placed.</p>
       <h2>7. Sharing</h2>
       <p>We do not sell personal information. Information may be shared with service providers that help operate Gulako, or when required by law.</p>
       <h2>8. Your choices</h2>

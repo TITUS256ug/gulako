@@ -30,6 +30,8 @@ export function DiscoveryPage() {
     {title:'Add your location', text:'Tell customers your town, area and where to find you.', done:Boolean(profile.location.trim()), href:'/dashboard/store'},
     {title:'Add directions', text:'A Google Maps link helps customers reach your business.', done:/^https?:\/\//.test(profile.mapsLink), href:'/dashboard/store'},
     {title:'Describe delivery and pickup', text:'List actual delivery areas, fees and pickup arrangements.', done:Boolean(profile.deliveryInfo.trim()), href:'/dashboard/store'},
+    {title:'Answer common questions', text:'Add clear answers about buying from your business.', done:profile.faqs.length>0, href:'/dashboard/store'},
+    {title:'Set your opening hours', text:'Confirm every day, including closed days, and your timezone.', done:profile.openingHours.length===7, href:'/dashboard/store'},
     {title:'Publish products with useful details', text:'Each product needs a name, photo and description. Keep prices and stock current.', done:products.length > 0 && products.every(p => p.name.trim() && p.description.trim() && (p.image || p.images?.length)), href:'/dashboard/products'},
     {title:'Connect a social profile', text:'Use consistent business details across your shop and social profiles.', done:Boolean(profile.instagram.trim() || profile.tiktok.trim()), href:'/dashboard/store'},
   ]

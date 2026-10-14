@@ -1,5 +1,5 @@
 export const SITE = 'https://gulako.site'
-export const SHOP_FIELDS = 'id,business_name,slug,category,location,description,whatsapp,maps_link,tiktok,instagram,delivery_info,accent,accent_color,logo_url,cover_url,published'
+export const SHOP_FIELDS = 'id,business_name,slug,category,location,description,whatsapp,maps_link,tiktok,instagram,delivery_info,accent,accent_color,logo_url,cover_url,published,faqs,opening_hours,timezone'
 export const PRODUCT_FIELDS = 'id,shop_id,name,category,price,currency,image_url,product_images,description,stock,negotiable,active'
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))
 export const safeJson = value => JSON.stringify(value).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029')
@@ -49,6 +49,7 @@ export function businessSchema(shop) {
     '@context':'https://schema.org', '@type': shop.location ? 'LocalBusiness' : 'OnlineStore',
     '@id':url + '#business', name:shop.business_name, url,
     description:cleanText(shop.description) || undefined,
+    openingHoursSpecification:(shop.opening_hours||[]).filter(h=>h.status==='open').map(h=>({'@type':'OpeningHoursSpecification',dayOfWeek:'https://schema.org/'+h.day,opens:h.opens,closes:h.closes})),
     address:cleanText(shop.location) || undefined,
     telephone:/^\+?[\d\s()-]{7,}$/.test(shop.whatsapp || '') ? shop.whatsapp : undefined,
     image:safeUrl(shop.cover_url) || safeUrl(shop.logo_url), logo:safeUrl(shop.logo_url),
