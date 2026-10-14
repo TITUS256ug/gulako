@@ -510,6 +510,12 @@ export function DashboardStorePage(){
     <div className="dashboard-two-col store-editor-layout">
       <section className="dash-card premium-card form-card">
         <div className="store-card-title"><div><h2>Store profile</h2><p>These details appear on your storefront.</p></div>{saved&&<span className="save-success"><Check size={14}/> Saved</span>}</div>
+        <div className={profile.locationVerified?'store-location-verification verified':'store-location-verification'}>
+          <div><strong>{profile.locationVerified?'Location verified by Gulako':'Business location verification'}</strong>
+            <p>{profile.locationVerified?'Your business location has been reviewed by Gulako. Changing your location or Maps details removes the badge until reviewed again.':'Available with the Business plan, after the founder confirms your actual location. Keep your business address and Maps link / Plus Code accurate.'}</p></div>
+          {profile.locationVerified?<span className="store-verification-status">✓ Verified</span>:<a className="soft-button" href="/dashboard/billing">View Business plan</a>}
+        </div>
+
         <ShopLogoUpload/>
         <div className="form-grid">
           <label className="wide"><span>Business name</span><input value={profile.businessName} onChange={e=>update('businessName',e.target.value)} placeholder="Your business name"/></label>
