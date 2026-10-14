@@ -1,4 +1,4 @@
-const CACHE = 'gulako-v5-shell'
+const CACHE = 'gulako-v6-shell'
 
 self.addEventListener('install', event => {
   self.skipWaiting()
