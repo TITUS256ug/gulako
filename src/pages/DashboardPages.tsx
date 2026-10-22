@@ -4,7 +4,7 @@ import type { ChangeEvent, FormEvent } from 'react'
 import { BusinessDetailsEditor } from '../components/BusinessDetailsEditor'
 import { AiDescription } from '../components/AiDescription'
 import { DashboardShell } from '../components/DashboardShell'
-import { PricingSection } from '../components/PricingSection'
+import { AccountSettings } from '../components/AccountSettings'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
 import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
@@ -620,9 +620,9 @@ export function DashboardSettingsPage(){
   const planLabel=plan.charAt(0).toUpperCase()+plan.slice(1)
   return <DashboardShell title="Settings" subtitle="Account, plan and business preferences.">
     <div className="settings-stack">
+      <AccountSettings />
       <section className="dash-card premium-card settings-row"><div><h2>Current plan</h2><p>{planLabel} · {limit?`${products.length} of ${limit} products active`:`${products.length} products active · unlimited products`} · unlimited orders</p></div><span className="current-plan-pill">{planLabel}</span></section>
-      <section className="dash-card premium-card dashboard-pricing-wrap"><div className="dash-card-head"><div><h2>Plans & billing</h2><p>Upgrade with Mobile Money or bank transfer. No payment gateway required.</p></div><a className="soft-button" href="/dashboard/billing">Billing</a></div><PricingSection compact/></section>
-      <section className="dash-card premium-card settings-row"><div><h2>Login & security</h2><p>Authentication setup will connect here.</p></div><button className="soft-button">Manage</button></section>
+      <section className="dash-card premium-card settings-row"><div><h2>Plans & billing</h2><p>Compare Free, Pro and Business, see your current benefits, or change your plan.</p></div><a className="soft-button" href="/dashboard/billing">Manage plan</a></section>
       <section className="dash-card premium-card settings-row"><div><h2>Notifications</h2><p>Order alerts and business updates.</p></div><button className="soft-button">Configure</button></section>
     </div>
   </DashboardShell>

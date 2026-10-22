@@ -1,6 +1,7 @@
 import { BadgeCheck, Check, Crown, Landmark, MapPin, Save, Search, ShieldCheck, Smartphone, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { backend } from '../lib/backend'
+import { SignOutButton } from '../components/SignOutButton'
 
 type Row={
   id:string
@@ -143,10 +144,10 @@ export function FounderPage(){
   }
 
   if(state==='loading')return null
-  if(state==='denied')return <main className="founder-denied"><ShieldCheck size={34}/><h1>Founder access only</h1><a className="primary-button" href="/dashboard">Back to dashboard</a></main>
+  if(state==='denied')return <main className="founder-denied"><ShieldCheck size={34}/><h1>Founder access only</h1><p>Sign in with your founder account to manage Gulako.</p><a className="primary-button" href="/dashboard">Back to dashboard</a><SignOutButton /></main>
 
   return <main className="founder-page">
-    <header className="founder-header"><div><span className="section-kicker"><Crown size={15}/> Founder</span><h1>Founder dashboard</h1><p>Manage seller plans, billing and access.</p></div><a className="soft-button" href="/dashboard">Seller dashboard</a></header>
+    <header className="founder-header"><div><span className="section-kicker"><Crown size={15}/> Founder</span><h1>Founder dashboard</h1><p>Manage seller plans, billing and access.</p></div><div className="founder-account-actions"><a className="soft-button" href="/dashboard">Seller dashboard</a><SignOutButton /></div></header>
 
     <section className="founder-summary">
       <article><small>Users</small><strong>{rows.length}</strong></article>

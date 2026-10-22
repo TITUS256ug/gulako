@@ -1,12 +1,13 @@
-import { BarChart3, Bell, Boxes, Clock3, CreditCard, Eye, LayoutDashboard, LogOut, Menu, Moon, Palette, Search, Settings, Sparkles, ShoppingBag, Sun, Users, X } from 'lucide-react'
+import { BarChart3, Bell, Boxes, Clock3, CreditCard, Crown, Eye, LayoutDashboard, Menu, Moon, Palette, Search, Settings, Sparkles, ShoppingBag, Sun, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
-import { clearSellerLocalData, getStoreAccent, getStoreProfile, hydrateSellerData } from '../lib/storeData'
+import { getStoreAccent, getStoreProfile, hydrateSellerData } from '../lib/storeData'
 import { backend } from '../lib/backend'
 import { applyTheme, getTheme } from '../lib/theme'
 import { Logo } from './Logo'
 import { InstallAppButton } from './InstallAppButton'
+import { SignOutButton } from './SignOutButton'
 import { fetchSellerNotifications, markAllNotificationsRead, markNotificationRead } from '../lib/orders'
 import type { SellerNotification } from '../lib/orders'
 
@@ -35,12 +36,6 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   const [notificationsOpen,setNotificationsOpen]=useState(false)
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false)
 
-  const signOut=async()=>{
-    await backend.auth.signOut()
-    clearSellerLocalData()
-    window.location.replace('/signin')
-  }
-
   useEffect(()=>{
     if(!mobileMenuOpen)return
     const dismiss=(event:KeyboardEvent)=>{if(event.key==='Escape')setMobileMenuOpen(false)}
@@ -53,13 +48,18 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   },[dark])
 
   useEffect(()=>{
+    let active=true
     void hydrateSellerData()
-    void (async()=>{
+    const loadAccount=async()=>{
       const {data:{user}}=await backend.auth.getUser()
       if(!user)return
       const {data}=await backend.from('profiles').select('role,plan').eq('id',user.id).maybeSingle()
-      if(data){setRole(data.role);setPlan(data.plan)}
-    })()
+      if(active&&data){setRole(data.role);setPlan(data.plan)}
+    }
+    const refreshAccount=()=>void loadAccount().catch(()=>undefined)
+    refreshAccount()
+    window.addEventListener('gulako-account',refreshAccount)
+    window.addEventListener('focus',refreshAccount)
     const refresh=()=>{
       setLogo(getShopLogo())
       setProfile(getStoreProfile())
@@ -67,6 +67,9 @@ export function DashboardShell({ children, title, subtitle, action }: { children
     window.addEventListener('gulako-brand',refresh)
     window.addEventListener('gulako-store',refresh)
     return()=>{
+      active=false
+      window.removeEventListener('gulako-account',refreshAccount)
+      window.removeEventListener('focus',refreshAccount)
       window.removeEventListener('gulako-brand',refresh)
       window.removeEventListener('gulako-store',refresh)
     }
@@ -117,17 +120,18 @@ export function DashboardShell({ children, title, subtitle, action }: { children
             <a key={href} href={href} className={(path === href) ? 'active' : ''}><Icon size={18} /> <span>{label}</span></a>
           ))}
           <a className={hasPublishedShop?'sidebar-view-shop':'sidebar-view-shop disabled'} href={previewHref} target={hasPublishedShop?'_blank':undefined} rel={hasPublishedShop?'noreferrer':undefined}><Eye size={18}/><span>{hasPublishedShop?'View shop':'Set up shop'}</span></a>
-          {(role==='founder'||role==='admin')&&<a href="/founder"><Settings size={18}/><span>Founder</span></a>}
         </nav>
         <div className="sidebar-bottom">
-          <button className="sidebar-signout" onClick={()=>void signOut()}><LogOut size={18} /> <span>Sign out</span></button>
+          {(role==='founder'||role==='admin')&&<a className="sidebar-founder" href="/founder" title="Founder dashboard" aria-label="Founder dashboard"><Crown size={18}/><span>Founder dashboard</span></a>}
+          <SignOutButton className="sidebar-signout" />
         </div>
       </aside>
       <main className="dashboard-main">
         <header className="dashboard-topbar">
           <div><p className="eyebrow">Seller workspace</p><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
           <div className="dashboard-top-actions">
-            <button type="button" className="icon-button mobile-signout-topbar" onClick={()=>void signOut()} aria-label="Sign out" title="Sign out"><LogOut size={18}/></button>
+            {(role==='founder'||role==='admin')&&<a className="soft-button dashboard-founder-link" href="/founder"><Crown size={17}/> Founder</a>}
+            <SignOutButton className="soft-button dashboard-signout" />
             <span className="dashboard-install"><InstallAppButton compact/></span>
             <button className="icon-button dashboard-theme-toggle" onClick={()=>setDark(value=>!value)} aria-label={dark?'Use light mode':'Use dark mode'} title={dark?'Use light mode':'Use dark mode'}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button>
             <div className="notification-wrap">
@@ -158,7 +162,7 @@ export function DashboardShell({ children, title, subtitle, action }: { children
             <a href={previewHref} target={hasPublishedShop?'_blank':undefined} rel={hasPublishedShop?'noreferrer':undefined}><Eye size={19}/>{hasPublishedShop?'View shop':'Set up shop'}</a>
             {(role==='founder'||role==='admin')&&<a href="/founder"><Settings size={19}/>Founder</a>}
           </nav>
-          <button className="mobile-dashboard-signout" type="button" onClick={()=>void signOut()}><LogOut size={19}/> Sign out</button>
+          <SignOutButton className="mobile-dashboard-signout" iconSize={19}/>
         </div>
       </>}
     </div>
