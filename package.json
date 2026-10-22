@@ -10,7 +10,8 @@
     "test:discovery": "node --test tests/discovery.test.mjs",
     "test:growth": "node --test tests/growth.test.mjs",
     "test:billing": "node --test tests/billing.test.mjs",
-    "test:checkout": "node --test tests/checkout.test.mjs"
+    "test:checkout": "node --test tests/checkout.test.mjs",
+    "test:clipboard": "node --test tests/clipboard.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.57.4",

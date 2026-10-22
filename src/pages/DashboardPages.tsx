@@ -5,6 +5,7 @@ import { BusinessDetailsEditor } from '../components/BusinessDetailsEditor'
 import { AiDescription } from '../components/AiDescription'
 import { DashboardShell } from '../components/DashboardShell'
 import { AccountSettings } from '../components/AccountSettings'
+import { CopyShopLinkButton } from '../components/CopyShopLinkButton'
 import { ShopLogoUpload } from '../components/ShopLogoUpload'
 import { backend } from '../lib/backend'
 import { getShopLogo } from '../lib/shopBrand'
@@ -12,6 +13,7 @@ import { BUSINESS_CATEGORIES, accentColors, addSellerProduct, applyStoreBrand, c
 import type { AccentName, StoreProfile } from '../lib/storeData'
 import { fetchSellerOrders, formatOrderStatus, updateOrderPaymentStatus, updateSellerOrderStatus } from '../lib/orders'
 import type { OrderStatus, SellerOrder } from '../lib/orders'
+import { siteUrl } from '../lib/site'
 
 const money=(n:number)=>new Intl.NumberFormat('en-UG').format(n)
 
@@ -149,6 +151,12 @@ export function DashboardHomePage(){
         <div className="plan-progress"><span style={{width:`${usage}%`}}/></div>
         <a href="/dashboard/billing">View plan & billing <ArrowUpRight size={14}/></a>
       </div>
+    </section>
+
+    <section className="dashboard-shop-link" aria-label="Your shop link">
+      <span className="shop-link-symbol"><Link2 size={21}/></span>
+      <div className="dashboard-shop-link-copy"><strong>Your shop link</strong>{profile.businessName && profile.slug ? <a href={siteUrl('/' + encodeURIComponent(profile.slug))} target="_blank" rel="noreferrer">gulako.site/{profile.slug}</a> : <span>Finish setting up your store to share it with customers.</span>}</div>
+      {profile.businessName && profile.slug ? <CopyShopLinkButton slug={profile.slug}/> : <a className="soft-button" href="/dashboard/store">Set up shop <ArrowUpRight size={16}/></a>}
     </section>
 
     <section className="seller-feature-shortcuts" aria-label="Quick seller tools">
@@ -440,6 +448,7 @@ export function DashboardAnalyticsPage(){
 
 export function DashboardStorePage(){
   const [profile,setProfile]=useState(()=>getStoreProfile())
+  const [savedSlug,setSavedSlug]=useState(()=>getStoreProfile().slug)
   const [saved,setSaved]=useState(false)
   const [saving,setSaving]=useState(false)
   const [coverError,setCoverError]=useState('')
@@ -452,6 +461,7 @@ export function DashboardStorePage(){
     void hydrateSellerData().then(()=>{
       const next=getStoreProfile()
       setProfile(next)
+      setSavedSlug(next.slug)
       setSlugMessage(validateStoreSlug(next.slug,next.slug))
     })
   },[])
@@ -462,7 +472,6 @@ export function DashboardStorePage(){
   }
 
   useEffect(()=>{
-    const savedSlug=getStoreProfile().slug
     const local=validateStoreSlug(profile.slug,savedSlug)
     setSlugMessage(local)
 
@@ -480,18 +489,19 @@ export function DashboardStorePage(){
     },350)
 
     return()=>window.clearTimeout(timer)
-  },[profile.slug])
+  },[profile.slug,savedSlug])
 
   const persist=async(next=profile)=>{
     setStoreError('')
     setSaving(true)
-    const checked=await checkStoreSlugAvailability(next.slug,getStoreProfile().slug)
+    const checked=await checkStoreSlugAvailability(next.slug,savedSlug)
     setSlugMessage(checked)
     if(!checked.valid){setSaving(false);return}
     const cleaned={...next,slug:checked.slug}
     setProfile(cleaned)
     try{
       await saveStoreProfile(cleaned)
+      setSavedSlug(cleaned.slug)
       setSaved(true)
       window.setTimeout(()=>window.location.assign('/dashboard'),900)
     }catch(err){
@@ -535,6 +545,7 @@ export function DashboardStorePage(){
   }
 
   const previewHref=profile.businessName&&slugMessage.valid?`/${profile.slug}`:'/dashboard/store'
+  const canCopyShopLink=Boolean(profile.businessName && profile.slug && profile.slug===savedSlug && slugMessage.valid && !slugChecking)
 
   return <DashboardShell title="Store" subtitle="Customize how your business appears." action={<a className="soft-button" href={previewHref} target={profile.businessName&&slugMessage.valid?'_blank':undefined} rel={profile.businessName&&slugMessage.valid?'noreferrer':undefined}><Eye size={17}/> Preview shop</a>}>
     <a className="seller-product-ai-banner" href="/dashboard/business-details">
@@ -556,7 +567,12 @@ export function DashboardStorePage(){
           <label className="wide"><span>Business name</span><input value={profile.businessName} onChange={e=>update('businessName',e.target.value)} placeholder="Your business name"/></label>
           <label><span>Category</span><select value={profile.category} onChange={e=>update('category',e.target.value)}><option value="">Select category</option>{BUSINESS_CATEGORIES.map(item=><option key={item} value={item}>{item}</option>)}</select></label>
           <label><span>Location</span><input value={profile.location} onChange={e=>update('location',e.target.value)} placeholder="Town, city or area"/></label>
-          <label className="wide premium-link-field"><span>Shop link</span><div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="yourshop"/></div><small className={slugChecking?'slug-status checking':slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugChecking?<><span className="slug-mini-spinner"/> Checking availability…</>:slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small><small className="field-hint">Choose a clean shop link using only letters and numbers.</small></label>
+          <div className="wide premium-link-field">
+            <label htmlFor="store-shop-slug">Shop link</label>
+            <div className={slugMessage.valid?'slug-input clean-shop-link premium valid':'slug-input clean-shop-link premium'}><span className="shop-link-prefix"><Link2 size={16}/><b>gulako.site</b><em>/</em></span><input id="store-shop-slug" aria-describedby="store-shop-slug-status store-shop-slug-hint" value={profile.slug} onChange={e=>update('slug',slugifyStoreName(e.target.value))} inputMode="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="yourshop"/></div>
+            <small id="store-shop-slug-status" className={slugChecking?'slug-status checking':slugMessage.valid?'slug-status available':'slug-status unavailable'}>{slugChecking?<><span className="slug-mini-spinner"/> Checking availability…</>:slugMessage.valid?<><Check size={12}/> Nice — gulako.site/{profile.slug} is available.</>:<><X size={12}/> {slugMessage.message}</>}</small>
+            <div className="shop-link-editor-actions"><small id="store-shop-slug-hint" className="field-hint">{profile.slug!==savedSlug?'Save your changes before copying your new shop link.':'Choose a clean shop link using only letters and numbers.'}</small><CopyShopLinkButton slug={profile.slug} disabled={!canCopyShopLink}/></div>
+          </div>
           <label className="wide"><span>Description</span><textarea value={profile.description} onChange={e=>update('description',e.target.value)} placeholder="Describe your business"/></label>
           <label className="wide"><span>WhatsApp</span><input value={profile.whatsapp||'+256'} onFocus={e=>{if(!e.currentTarget.value)update('whatsapp','+256')}} onChange={e=>update('whatsapp',e.target.value)} onBlur={e=>update('whatsapp',normalizeWhatsapp(e.target.value))} inputMode="tel" autoComplete="tel" placeholder="+256 7XX XXX XXX"/><small className="field-hint">Uganda starts with +256. You can replace it with another country code.</small></label>
           <div className="wide merchant-setup">

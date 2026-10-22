@@ -1,5 +1,5 @@
 import { BarChart3, Bell, Boxes, Clock3, CreditCard, Crown, Eye, LayoutDashboard, Menu, Moon, Palette, Search, Settings, Sparkles, ShoppingBag, Sun, Users, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { getShopLogo } from '../lib/shopBrand'
 import { getStoreAccent, getStoreProfile, hydrateSellerData } from '../lib/storeData'
@@ -34,14 +34,35 @@ export function DashboardShell({ children, title, subtitle, action }: { children
   const [dark,setDark]=useState(()=>getTheme()==='dark')
   const [notifications,setNotifications]=useState<SellerNotification[]>([])
   const [notificationsOpen,setNotificationsOpen]=useState(false)
-  const [mobileMenuOpen,setMobileMenuOpen]=useState(false)
+  const [menuOpen,setMenuOpen]=useState(false)
+  const menuRef=useRef<HTMLDivElement>(null)
 
   useEffect(()=>{
-    if(!mobileMenuOpen)return
-    const dismiss=(event:KeyboardEvent)=>{if(event.key==='Escape')setMobileMenuOpen(false)}
+    if(!menuOpen)return
+    const previousFocus=document.activeElement
+    const previousOverflow=document.body.style.overflow
+    document.body.style.overflow='hidden'
+    menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus()
+    const dismiss=(event:KeyboardEvent)=>{
+      if(event.key==='Escape')setMenuOpen(false)
+      if(event.key!=='Tab')return
+      const controls=menuRef.current?.querySelectorAll<HTMLElement>('a[href],button:not([disabled])')
+      if(!controls?.length)return
+      const first=controls[0],last=controls[controls.length-1]
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+    }
+    const desktop=window.matchMedia('(min-width: 1101px)')
+    const closeOnDesktop=()=>{if(desktop.matches)setMenuOpen(false)}
     window.addEventListener('keydown',dismiss)
-    return()=>window.removeEventListener('keydown',dismiss)
-  },[mobileMenuOpen])
+    desktop.addEventListener('change',closeOnDesktop)
+    return()=>{
+      window.removeEventListener('keydown',dismiss)
+      desktop.removeEventListener('change',closeOnDesktop)
+      document.body.style.overflow=previousOverflow
+      if(previousFocus instanceof HTMLElement)previousFocus.focus({preventScroll:true})
+    }
+  },[menuOpen])
 
   useEffect(()=>{
     applyTheme(dark?'dark':'light')
@@ -109,15 +130,15 @@ export function DashboardShell({ children, title, subtitle, action }: { children
 
   return (
     <div className="dashboard-shell seller-themed" style={sellerTheme}>
-      <aside className="dashboard-sidebar">
+      <aside className="dashboard-sidebar" aria-hidden={menuOpen || undefined}>
         <Logo />
         <div className="shop-switcher">
           {logo ? <img className="dash-logo-image" src={logo} alt="Shop logo"/> : <span className="dash-avatar">G</span>}
           <div><strong>{shopName}</strong><small>{plan.charAt(0).toUpperCase()+plan.slice(1)} plan · {plan==='free'?'100 products':'Unlimited products'}</small></div>
         </div>
-        <nav>
+        <nav aria-label="Seller navigation">
           {links.map(({ href, label, icon: Icon }) => (
-            <a key={href} href={href} className={(path === href) ? 'active' : ''}><Icon size={18} /> <span>{label}</span></a>
+            <a key={href} href={href} aria-current={path===href?'page':undefined} className={(path === href) ? 'active' : ''}><Icon size={18} /> <span>{label}</span></a>
           ))}
           <a className={hasPublishedShop?'sidebar-view-shop':'sidebar-view-shop disabled'} href={previewHref} target={hasPublishedShop?'_blank':undefined} rel={hasPublishedShop?'noreferrer':undefined}><Eye size={18}/><span>{hasPublishedShop?'View shop':'Set up shop'}</span></a>
         </nav>
@@ -126,9 +147,12 @@ export function DashboardShell({ children, title, subtitle, action }: { children
           <SignOutButton className="sidebar-signout" />
         </div>
       </aside>
-      <main className="dashboard-main">
+      <main className="dashboard-main" aria-hidden={menuOpen || undefined}>
         <header className="dashboard-topbar">
-          <div><p className="eyebrow">Seller workspace</p><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
+          <div className="dashboard-heading">
+            <button type="button" className="soft-button dashboard-menu-toggle" aria-expanded={menuOpen} aria-controls="gulako-seller-more" onClick={()=>setMenuOpen(true)}><Menu size={20}/><span>Menu</span></button>
+            <div className="dashboard-heading-copy"><p className="eyebrow">Seller workspace</p><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}</div>
+          </div>
           <div className="dashboard-top-actions">
             {(role==='founder'||role==='admin')&&<a className="soft-button dashboard-founder-link" href="/founder"><Crown size={17}/> Founder</a>}
             <SignOutButton className="soft-button dashboard-signout" />
@@ -146,19 +170,20 @@ export function DashboardShell({ children, title, subtitle, action }: { children
         </header>
         {children}
       </main>
-      <nav className="mobile-dashboard-nav" aria-label="Seller mobile navigation">
+      <nav className="mobile-dashboard-nav" aria-label="Seller mobile navigation" aria-hidden={menuOpen || undefined}>
         <a className={path==='/dashboard'?'active':''} href="/dashboard"><LayoutDashboard size={20}/><span>Home</span></a>
         <a className={path==='/dashboard/products'?'active':''} href="/dashboard/products"><Boxes size={20}/><span>Products</span></a>
         <a className={path==='/dashboard/orders'?'active':''} href="/dashboard/orders"><ShoppingBag size={20}/><span>Orders</span></a>
         <a className={path==='/dashboard/billing'?'active':''} href="/dashboard/billing"><CreditCard size={20}/><span>Billing</span></a>
-        <button type="button" className={mobileMenuOpen?'active':''} aria-expanded={mobileMenuOpen} aria-controls="gulako-seller-more" onClick={()=>setMobileMenuOpen(v=>!v)}>{mobileMenuOpen?<X size={20}/>:<Menu size={20}/>}<span>More</span></button>
+        <button type="button" className={menuOpen?'active':''} aria-expanded={menuOpen} aria-controls="gulako-seller-more" onClick={()=>setMenuOpen(v=>!v)}>{menuOpen?<X size={20}/>:<Menu size={20}/>}<span>More</span></button>
       </nav>
-      {mobileMenuOpen&&<>
-        <button className="mobile-dashboard-scrim" aria-label="Close seller menu" onClick={()=>setMobileMenuOpen(false)}/>
-        <div className="mobile-dashboard-drawer" id="gulako-seller-more" role="dialog" aria-label="Seller navigation">
-          <div className="mobile-dashboard-drawer-head"><strong>Seller menu</strong><button type="button" aria-label="Close menu" onClick={()=>setMobileMenuOpen(false)}><X size={19}/></button></div>
+      {menuOpen&&<>
+        <button type="button" className="mobile-dashboard-scrim" tabIndex={-1} aria-label="Close seller menu" onClick={()=>setMenuOpen(false)}/>
+        <div className="mobile-dashboard-drawer" ref={menuRef} id="gulako-seller-more" role="dialog" aria-modal="true" aria-label="Seller navigation">
+          <div className="mobile-dashboard-drawer-head"><strong>Seller menu</strong><button type="button" aria-label="Close menu" onClick={()=>setMenuOpen(false)}><X size={19}/></button></div>
+          <div className="seller-menu-shop"><strong>{shopName}</strong><small>{plan.charAt(0).toUpperCase()+plan.slice(1)} plan</small></div>
           <nav aria-label="All seller pages">
-            {links.map(({href,label,icon:Icon})=><a key={href} href={href} className={path===href?'active':''}><Icon size={19}/>{label}</a>)}
+            {links.map(({href,label,icon:Icon})=><a key={href} href={href} aria-current={path===href?'page':undefined} className={path===href?'active':''}><Icon size={19}/>{label}</a>)}
             <a href={previewHref} target={hasPublishedShop?'_blank':undefined} rel={hasPublishedShop?'noreferrer':undefined}><Eye size={19}/>{hasPublishedShop?'View shop':'Set up shop'}</a>
             {(role==='founder'||role==='admin')&&<a href="/founder"><Settings size={19}/>Founder</a>}
           </nav>
