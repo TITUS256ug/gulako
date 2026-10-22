@@ -5,6 +5,8 @@ import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { cartDetails, getCart, saveCart } from '../lib/cart'
 import { placePublicOrder } from '../lib/orders'
+import { useCartInventory } from '../lib/checkoutInventory'
+import { checkoutErrorMessage, stockIssue } from '../lib/checkoutValidation'
 import { fetchPublicShop } from '../lib/storeData'
 import type { StoreProfile } from '../lib/storeData'
 
@@ -21,7 +23,9 @@ type BuyerDetails={
 }
 
 export function CheckoutPage() {
-  const lines = cartDetails()
+  const [cartVersion,setCartVersion]=useState(0)
+  const lines = useMemo(()=>cartDetails(),[cartVersion])
+  const inventory=useCartInventory(lines.filter(line=>line.product.shopSlug!=='demo').map(line=>line.productId))
   const [shops,setShops]=useState<Record<string,ShopPayment>>({})
   const [copied,setCopied]=useState('')
   const [buyer,setBuyer]=useState<BuyerDetails>({name:'',phone:'+256',location:'',note:''})
@@ -29,6 +33,12 @@ export function CheckoutPage() {
   const [references,setReferences]=useState<Record<string,string>>({})
   const [placing,setPlacing]=useState('')
   const [error,setError]=useState('')
+
+  useEffect(()=>{
+    const refresh=()=>setCartVersion(value=>value+1)
+    window.addEventListener('gulako-cart',refresh)
+    return()=>window.removeEventListener('gulako-cart',refresh)
+  },[])
 
   const groups=useMemo(()=>{
     const map=new Map<string,typeof lines>()
@@ -75,6 +85,7 @@ export function CheckoutPage() {
   }
 
   const place=async(slug:string,group:typeof lines)=>{
+    if(placing)return
     setError('')
     if(!buyer.name.trim()){setError('Enter your name before placing the order.');return}
     if(buyer.phone.replace(/\D/g,'').length<7){setError('Enter a valid phone or WhatsApp number.');return}
@@ -97,7 +108,8 @@ export function CheckoutPage() {
       saveCart(getCart().filter(line=>!ids.has(line.productId)))
       window.location.assign('/order/'+encodeURIComponent(result.publicRef))
     }catch(err){
-      setError(err instanceof Error?err.message:'Could not place your order. Please try again.')
+      setError(checkoutErrorMessage(err))
+      inventory.refresh()
       setPlacing('')
     }
   }
@@ -134,7 +146,8 @@ export function CheckoutPage() {
       </div>
     </section>
 
-    {error&&<p className="checkout-error">{error}</p>}
+    {error&&<p className="checkout-error" role="alert">{error} <a href="/cart">Review cart</a></p>}
+    {inventory.error&&<p className="checkout-error" role="alert">{inventory.error} <button type="button" className="soft-button" onClick={inventory.refresh}>Check stock again</button></p>}
 
     <div className="checkout-groups">
       {groups.map(([slug,group])=>{
@@ -145,6 +158,7 @@ export function CheckoutPage() {
         const fallbackNetwork=payment?.paymentNetwork??''
         const fallbackNumber=payment?.paymentNumber??''
         const method=methods[slug]??(mtnCode?'mtn':airtelCode?'airtel':'other')
+        const issues=inventory.loading||inventory.error?[]:group.map(line=>({id:line.productId,message:stockIssue(line.product.name,line.quantity,inventory.products[line.productId])})).filter(item=>item.message)
         return <section className="checkout-seller-card" key={slug}>
           <div className="checkout-seller-head">
             <div><small>Ordering from</small><h2>{payment?.businessName||group[0].product.shopName}</h2><span>{group.reduce((sum,line)=>sum+line.quantity,0)} item{group.reduce((sum,line)=>sum+line.quantity,0)===1?'':'s'}</span></div>
@@ -155,7 +169,9 @@ export function CheckoutPage() {
             {group.map(line=><div key={line.productId}><span>{line.quantity} × {line.product.name}</span><strong>UGX {money(line.product.price*line.quantity)}</strong></div>)}
           </div>
 
-          {mtnCode||airtelCode?<div className="merchant-payment-options">
+          {issues.length>0&&<div className="checkout-stock-warning" role="alert"><strong>Update quantities before placing this order</strong>{issues.map(issue=><p key={issue.id}>{issue.message}</p>)}<a className="soft-button" href="/cart">Edit cart quantities</a></div>}
+
+          {!inventory.loading&&!inventory.error&&issues.length===0&&(mtnCode||airtelCode?<div className="merchant-payment-options">
             <div className="merchant-payment-title"><div><strong>Choose how to pay</strong><span>Pay this seller directly, then place the order below.</span></div><b>UGX {money(subtotal)}</b></div>
             {mtnCode&&<div className="merchant-pay-card mtn-pay">
               <div className="merchant-pay-brand"><span><img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/MTN_2022_logo.svg" alt="MTN"/></span><div><small>MTN MoMoPay merchant code</small><strong>{mtnCode}</strong></div></div>
@@ -181,14 +197,14 @@ export function CheckoutPage() {
             <p className="legacy-payment-note">This seller has not added a merchant code yet. Use the number above only after confirming it with the seller.</p>
           </div>:<div className="momo-missing">
             <Smartphone size={21}/><div><strong>Merchant payment details not added yet</strong><span>You can still place the order and arrange payment with the seller.</span></div>
-          </div>}
+          </div>)}
 
           <div className="order-payment-report">
             <label><span>Payment method</span><select value={method} onChange={e=>setMethods(current=>({...current,[slug]:e.target.value as 'mtn'|'airtel'|'other'}))}>{mtnCode&&<option value="mtn">MTN MoMo</option>}{airtelCode&&<option value="airtel">Airtel Money</option>}<option value="other">Arrange with seller</option></select></label>
             <label><span>Transaction ID / reference (optional)</span><input value={references[slug]??''} onChange={e=>setReferences(current=>({...current,[slug]:e.target.value}))} placeholder="Enter after payment if available"/></label>
           </div>
 
-          <button className="primary-button large full-width place-order-button" disabled={placing===slug} onClick={()=>void place(slug,group)}>{placing===slug?'Creating order…':'Place order'}</button>
+          <button className="primary-button large full-width place-order-button" disabled={Boolean(placing)||inventory.loading||Boolean(inventory.error)||issues.length>0} onClick={()=>void place(slug,group)}>{placing===slug?'Creating order…':inventory.loading?'Checking availability…':issues.length?'Update cart to continue':'Place order'}</button>
           <small className="checkout-order-note">After placing the order you’ll get a tracking page and can message the seller directly.</small>
         </section>
       })}

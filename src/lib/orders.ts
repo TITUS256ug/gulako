@@ -1,5 +1,7 @@
 import { getTrafficVisit, trackShopEvent } from './traffic'
 import { backend } from './backend'
+import { fetchCheckoutInventory } from './checkoutInventory'
+import { checkoutErrorMessage, stockIssue } from './checkoutValidation'
 
 export type OrderStatus='new'|'confirmed'|'processing'|'delivering'|'completed'|'cancelled'
 export type PaymentStatus='unverified'|'reported'|'confirmed'
@@ -120,6 +122,12 @@ export async function placePublicOrder(input:{
   paymentReference:string
   items:Array<{productId:string;quantity:number}>
 }){
+  const inventory=await fetchCheckoutInventory(input.items.map(item=>item.productId))
+  for(const item of input.items){
+    const product=inventory[item.productId]
+    const issue=stockIssue(product?.name||'A product in your cart',item.quantity,product?.shopSlug===input.shopSlug?product:undefined)
+    if(issue)throw new Error(issue)
+  }
   await trackShopEvent(input.shopSlug,'checkout_start')
   const {data,error}=await backend.rpc('create_attributed_order',{
     visit_token:getTrafficVisit(input.shopSlug)?.id??null,
@@ -132,7 +140,7 @@ export async function placePublicOrder(input:{
     pay_reference:input.paymentReference,
     items:input.items.map(item=>({product_id:item.productId,quantity:item.quantity})),
   })
-  if(error)throw error
+  if(error)throw new Error(checkoutErrorMessage(error))
   if(!data?.public_ref)throw new Error('Order could not be created.')
   return{
     id:String(data.id??''),

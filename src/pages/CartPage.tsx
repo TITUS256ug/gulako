@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Footer } from '../components/Footer'
 import { Header } from '../components/Header'
 import { cartDetails, updateCart } from '../lib/cart'
+import { useCartInventory } from '../lib/checkoutInventory'
+import { stockIssue } from '../lib/checkoutValidation'
 
 export function CartPage() {
   const [version, setVersion] = useState(0)
@@ -13,6 +15,8 @@ export function CartPage() {
   }, [])
 
   const lines = useMemo(() => cartDetails(), [version])
+  const inventory=useCartInventory(lines.filter(line=>line.product.shopSlug!=='demo').map(line=>line.productId))
+  const issues=inventory.loading||inventory.error?[]:lines.filter(line=>line.product.shopSlug!=='demo').map(line=>stockIssue(line.product.name,line.quantity,inventory.products[line.productId])).filter(Boolean)
   const subtotal = lines.reduce((sum, line) => sum + line.product.price * line.quantity, 0)
   const money = (n:number) => new Intl.NumberFormat('en-UG').format(n)
   const firstShop=lines[0]?.product
@@ -37,6 +41,9 @@ export function CartPage() {
         {uniqueShops>1&&<div className="multi-shop-note"><Clock3 size={18}/><div><strong>Products from {uniqueShops} shops</strong><span>At checkout, payment instructions are shown separately for each seller.</span></div></div>}
         {lines.map(line=>{
           const image=line.product.images?.[0]||line.product.image
+          const current=line.product.shopSlug==='demo'?{...line.product,shopSlug:'demo'}:inventory.products[line.productId]
+          const available=current?.stock??line.product.stock
+          const issue=inventory.loading||inventory.error?null:stockIssue(line.product.name,line.quantity,current)
           return <article className="cart-line premium-cart-line" key={line.productId}>
             <a className="cart-line-image" href={'/product/'+line.product.id}>{image?<img src={image} alt={line.product.name}/>:<span><ShoppingBag size={24}/></span>}</a>
             <div className="cart-line-main">
@@ -46,8 +53,11 @@ export function CartPage() {
               <div className="quantity-control">
                 <button onClick={()=>updateCart(line.productId,line.quantity-1)} aria-label="Decrease quantity"><Minus size={15}/></button>
                 <span>{line.quantity}</span>
-                <button onClick={()=>updateCart(line.productId,line.quantity+1)} aria-label="Increase quantity"><Plus size={15}/></button>
+                <button disabled={line.quantity>=Math.min(available,99)} onClick={()=>updateCart(line.productId,line.quantity+1)} aria-label="Increase quantity" title={line.quantity>=available?'Available stock reached':'Increase quantity'}><Plus size={15}/></button>
               </div>
+              <small>{inventory.loading?'Checking stock…':inventory.error?'Stock check unavailable':current?`${available} available`:'Unavailable'}</small>
+              {issue&&<p className="cart-stock-error" role="alert">{issue}</p>}
+              {!inventory.loading&&!inventory.error&&current&&line.quantity>available&&available>0&&<button type="button" className="soft-button cart-stock-adjust" onClick={()=>updateCart(line.productId,Math.min(available,99))}>Use available quantity ({Math.min(available,99)})</button>}
             </div>
             <div className="cart-line-total"><strong>UGX {money(line.product.price*line.quantity)}</strong><button className="delete-button" onClick={()=>updateCart(line.productId,0)} aria-label="Remove product"><Trash2 size={18}/></button></div>
           </article>
@@ -60,7 +70,8 @@ export function CartPage() {
         <div><span>Delivery</span><span>Confirmed with seller</span></div>
         <hr/>
         <div className="summary-total"><span>Total</span><strong>UGX {money(subtotal)}</strong></div>
-        <a className="primary-button large full-width" href="/checkout">Continue to Mobile Money <ArrowRight size={18}/></a>
+        {inventory.error&&<p className="cart-stock-error" role="alert">{inventory.error} <button type="button" className="soft-button" onClick={inventory.refresh}>Check again</button></p>}
+        {inventory.loading||inventory.error||issues.length>0?<button type="button" className="primary-button large full-width" disabled>{inventory.loading?'Checking availability…':inventory.error?'Check stock to continue':'Update quantities to continue'}</button>:<a className="primary-button large full-width" href="/checkout">Continue to checkout <ArrowRight size={18}/></a>}
         <small>No buyer account required.</small>
       </aside>
     </div>}
